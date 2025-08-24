@@ -39,13 +39,18 @@ export class RoomEffects {
           this.hub.chatMessage$.pipe(map((msg) => roomActions.messageReceived({ msg }))),
           this.hub.playerMoved$.pipe(map((player: any) => roomActions.playerMoved({ player }))),
           this.hub.bulletSpawned$.pipe(map((bullet) => roomActions.bulletSpawned({ bullet }))),
-          this.hub.bulletDespawned$.pipe(map(({ bulletId }) => roomActions.bulletDespawned({ bulletId }))),
+          this.hub.bulletDespawned$.pipe(map(({ bulletId, reason }) => roomActions.bulletDespawned({ bulletId, reason }))),
 
           this.hub.roomSnapshot$.pipe(map((snapshot) => roomActions.roomSnapshotReceived({ snapshot }))),
           this.hub.mapSnapshot$.pipe(map((snapshot) => roomActions.mapSnapshotReceived({ snapshot }))),
           this.hub.mapTileUpdated$.pipe(map((tile) => roomActions.mapTileUpdated({ tile }))),
           this.hub.playerLifeLost$.pipe(map((data) => roomActions.playerLifeLost({ data }))),
           this.hub.playerRespawned$.pipe(map((data) => roomActions.playerRespawned({ data }))),
+          this.hub.playerScored$.pipe(map((data) => roomActions.playerScored({ data }))),
+          this.hub.gameEnded$.pipe(map((data) => roomActions.gameEnded({ data }))),
+          this.hub.powerUpsSnapshot$.pipe(map((powerUps) => roomActions.powerUpsSnapshotReceived({ powerUps }))),
+          this.hub.powerUpSpawned$.pipe(map((powerUp) => roomActions.powerUpSpawned({ powerUp }))),
+          this.hub.powerUpCollected$.pipe(map((payload) => roomActions.powerUpCollected(payload))),
         ).pipe(takeUntil(stop$));
       })
     )
@@ -128,11 +133,20 @@ export class RoomEffects {
             const match = list.find(r => r.roomCode === code);
             return match?.roomId ?? null;
           }),
-          switchMap((roomId) => roomId ? this.roomsHttp.getRoom(roomId) : of(null)),
-          map((room) => roomActions.rosterLoaded({ players: room?.players ?? [] })),
-          catchError(() => of(roomActions.rosterLoaded({ players: [] })))
+          switchMap((roomId) => roomId ? this.roomsHttp.getRoom(roomId).pipe(map(r => ({ room: r, roomId }))) : of({ room: null, roomId: null })),
+          map(({ room, roomId }) => roomActions.rosterLoaded({ players: room?.players ?? [], roomId })),
+          catchError(() => of(roomActions.rosterLoaded({ players: [], roomId: null })))
         )
       )
     )
+  );
+
+  logBulletCollisions$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(roomActions.bulletDespawned),
+        tap(({ bulletId, reason }) => console.log('Bullet', bulletId, 'despawned because', reason))
+      ),
+    { dispatch: false }
   );
 }

@@ -13,4 +13,6 @@ public interface IMapService
     bool TryGetTile(string roomId, int tx, int ty, out MapTileDto tile);
     bool TryDamageDestructible(string roomId, int tx, int ty, out MapTileDto updated);
     bool IsSolid(string roomId, int tx, int ty);
+
+    (float x, float y)[] GetSpawnPoints(string roomId);
 }

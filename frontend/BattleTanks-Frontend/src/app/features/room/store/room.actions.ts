@@ -8,7 +8,10 @@ import {
   MapTileDto,
   PlayerLifeLostDto,
   PlayerRespawnedDto,
+  PlayerScoredDto,
+  GameEndedDto,
   RoomSnapshotDto,
+  PowerUpDto,
 } from '../../../core/models/game.models';
 
 export const roomActions = createActionGroup({
@@ -27,7 +30,7 @@ export const roomActions = createActionGroup({
     'Leave Room': emptyProps(),
     'Left': emptyProps(),
 
-    'Roster Loaded': props<{ players: PlayerStateDto[] }>(),
+    'Roster Loaded': props<{ players: PlayerStateDto[]; roomId: string | null }>(),
 
     // Snapshots nuevos
     'Room Snapshot Received': props<{ snapshot: RoomSnapshotDto }>(),
@@ -38,9 +41,14 @@ export const roomActions = createActionGroup({
     'Player Left': props<{ userId: string }>(),
     'Player Moved': props<{ player: PlayerStateDto | { playerId: string; x: number; y: number; rotation: number; health?: number; isAlive?: boolean; username?: string } }>(),
     'Bullet Spawned': props<{ bullet: BulletStateDto }>(),
-    'Bullet Despawned': props<{ bulletId: string }>(),
+    'Bullet Despawned': props<{ bulletId: string; reason?: string }>(),
     'Player Life Lost': props<{ data: PlayerLifeLostDto }>(),
     'Player Respawned': props<{ data: PlayerRespawnedDto }>(),
+    'Player Scored': props<{ data: PlayerScoredDto }>(),
+    'Game Ended': props<{ data: GameEndedDto }>(),
+    'PowerUps Snapshot Received': props<{ powerUps: PowerUpDto[] }>(),
+    'PowerUp Spawned': props<{ powerUp: PowerUpDto }>(),
+    'PowerUp Collected': props<{ powerUpId: string; userId: string }>(),
     'Message Received': props<{ msg: ChatMessageDto }>(),
 
     // Cliente→servidor

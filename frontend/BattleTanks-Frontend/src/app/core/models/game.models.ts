@@ -6,6 +6,8 @@ export interface PlayerStateDto {
   rotation: number;
   health: number;
   isAlive: boolean;
+  lives?: number;
+  score?: number;
 }
 
 export interface PlayerPositionDto {
@@ -68,8 +70,28 @@ export interface PlayerRespawnedDto {
   y: number;
 }
 
+export interface PlayerScoredDto {
+  playerId: string;
+  score: number;
+}
+
+export interface GameEndedDto {
+  winnerPlayerId: string;
+  scores: PlayerScoredDto[];
+}
+
 export interface RoomSnapshotDto {
   roomId: string;
   roomCode: string;
   players: PlayerStateDto[];
+}
+
+export type PowerUpType = 'ExtraLife';
+
+export interface PowerUpDto {
+  id: string;
+  roomId: string;
+  type: PowerUpType;
+  x: number;
+  y: number;
 }

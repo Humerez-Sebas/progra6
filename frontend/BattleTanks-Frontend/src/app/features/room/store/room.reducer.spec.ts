@@ -1,4 +1,4 @@
-import { roomReducer, RoomState, roomPlayersAdapter, roomBulletsAdapter } from './room.reducer';
+import { roomReducer, RoomState, roomPlayersAdapter, roomBulletsAdapter, roomPowerUpsAdapter } from './room.reducer';
 import { roomActions } from './room.actions';
 import { ChatMessageDto } from '../../../core/models/game.models';
 
@@ -7,14 +7,17 @@ describe('Room Reducer', () => {
 
   beforeEach(() => {
     initial = {
+      roomId: null,
       roomCode: null,
       joined: false,
       hubConnected: false,
       error: null,
       players: roomPlayersAdapter.getInitialState(),
       bullets: roomBulletsAdapter.getInitialState(),
+      powerUps: roomPowerUpsAdapter.getInitialState(),
       chat: [],
       lastUsername: null,
+      map: null,
     };
   });
 

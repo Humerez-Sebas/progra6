@@ -1,6 +1,7 @@
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Services;
 
@@ -10,17 +11,20 @@ public class GameService : IGameService
     private readonly IPlayerRepository _playerRepository;
     private readonly IUserRepository _userRepository;
     private readonly IGameNotificationService _notificationService;
+    private readonly IScoreRepository _scoreRepository;
 
     public GameService(
         IGameSessionRepository gameSessionRepository,
         IPlayerRepository playerRepository,
         IUserRepository userRepository,
-        IGameNotificationService notificationService)
+        IGameNotificationService notificationService,
+        IScoreRepository scoreRepository)
     {
         _gameSessionRepository = gameSessionRepository;
         _playerRepository = playerRepository;
         _userRepository = userRepository;
         _notificationService = notificationService;
+        _scoreRepository = scoreRepository;
     }
 
     public async Task<RoomStateDto?> CreateRoom(string userId, CreateRoomDto createRoomDto)
@@ -176,6 +180,27 @@ public class GameService : IGameService
         return true;
     }
 
+    public async Task<RoomStateDto?> StartGame(string roomId)
+    {
+        if (!Guid.TryParse(roomId, out var roomGuid))
+            return null;
+
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
+        if (session == null)
+            return null;
+
+        session.StartGame();
+        if (session.Status != GameRoomStatus.InProgress)
+            return null;
+
+        await _gameSessionRepository.UpdateAsync(session);
+
+        var roomState = MapToRoomStateDto(session);
+        await _notificationService.NotifyRoomStateChanged(roomId, roomState);
+
+        return roomState;
+    }
+
     public async Task<RoomStateDto?> GetRoomState(string roomId)
     {
         if (!Guid.TryParse(roomId, out var roomGuid))
@@ -206,6 +231,59 @@ public class GameService : IGameService
     {
         var sessions = await _gameSessionRepository.GetActiveSessionsAsync();
         return sessions.Select(MapToRoomStateDto).ToList();
+    }
+
+    public async Task AwardWallPoints(string roomId, string userId, int points)
+    {
+        if (!Guid.TryParse(roomId, out var roomGuid) || !Guid.TryParse(userId, out var userGuid)) return;
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
+        var player = session?.GetPlayer(userGuid);
+        if (player is null) return;
+        player.AddScore(points);
+        await _playerRepository.UpdateAsync(player);
+    }
+
+    public async Task RegisterKill(string roomId, string shooterId, string targetId, int points)
+    {
+        if (!Guid.TryParse(roomId, out var roomGuid) ||
+            !Guid.TryParse(shooterId, out var shooterGuid) ||
+            !Guid.TryParse(targetId, out var targetGuid)) return;
+
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
+        if (session is null) return;
+        var shooter = session.GetPlayer(shooterGuid);
+        var target = session.GetPlayer(targetGuid);
+        if (shooter is null || target is null) return;
+
+        shooter.AddKill(points);
+        target.TakeDamage(100);
+        await _playerRepository.UpdateAsync(shooter);
+        await _playerRepository.UpdateAsync(target);
+        await _gameSessionRepository.UpdateAsync(session);
+    }
+
+    public async Task EndGame(string roomId)
+    {
+        if (!Guid.TryParse(roomId, out var roomGuid)) return;
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
+        if (session is null) return;
+
+        session.EndGame();
+        await _gameSessionRepository.UpdateAsync(session);
+
+        foreach (var score in session.Scores)
+        {
+            await _scoreRepository.AddAsync(score);
+            var user = await _userRepository.GetByIdAsync(score.UserId);
+            if (user != null)
+            {
+                user.AddGameResult(score.IsWinner, score.Points);
+                await _userRepository.UpdateAsync(user);
+            }
+        }
+
+        var roomState = MapToRoomStateDto(session);
+        await _notificationService.NotifyRoomStateChanged(roomId, roomState);
     }
 
     private RoomStateDto MapToRoomStateDto(GameSession session)

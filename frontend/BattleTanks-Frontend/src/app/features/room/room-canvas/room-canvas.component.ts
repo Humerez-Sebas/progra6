@@ -13,7 +13,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { selectBullets, selectPlayers, selectMapSize, selectTilesByKey } from '../store/room.selectors';
+import { selectBullets, selectPlayers, selectMapSize, selectTilesByKey, selectPowerUps } from '../store/room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { roomActions } from '../store/room.actions';
 
@@ -44,6 +44,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
   players      = toSignal(this.store.select(selectPlayers), { initialValue: [] });
   serverBullets = toSignal(this.store.select(selectBullets), { initialValue: [] });
+  powerUps     = toSignal(this.store.select(selectPowerUps), { initialValue: [] });
   me           = toSignal(this.store.select(selectUser), { initialValue: null });
 
   mapSize   = toSignal(this.store.select(selectMapSize), { initialValue: { width: 0, height: 0, tileSize: 40 } });
@@ -87,17 +88,12 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
     effect(() => {
       const ms = this.mapSize();
-      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0) {
-        const centerX = (ms.width * ms.tileSize) / 2;
-        const centerY = (ms.height * ms.tileSize) / 2;
-        this.setPlayerPositionClamped(centerX, centerY);
-        this.rot.set(0);
+      const meId = this.me()?.id;
+      const mePlayer = this.players().find(p => p.playerId === meId);
+      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0 && mePlayer) {
+        this.setPlayerPositionClamped(mePlayer.x, mePlayer.y);
+        this.rot.set(mePlayer.rotation || 0);
         this.spawnPlaced = true;
-
-        const meId = this.me()?.id ?? 'me';
-        this.store.dispatch(roomActions.updatePosition({
-          dto: { playerId: meId, x: this.px(), y: this.py(), rotation: this.rot(), timestamp: Date.now() }
-        }));
       }
     });
   }
@@ -159,7 +155,10 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     const maxY = Math.floor((cy + this.halfH - 1) / tileSize);
     for (let ty = minY; ty <= maxY; ty++) {
       for (let tx = minX; tx <= maxX; tx++) {
-        if (this.isSolidTile(tx, ty)) return true;
+        if (this.isSolidTile(tx, ty)) {
+          console.log('Collision with tile', tx, ty, 'type', this.tilesByKey()[`${tx},${ty}`]?.type ?? 'boundary');
+          return true;
+        }
       }
     }
     return false;
@@ -255,6 +254,19 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
         const w = Math.max(4, (tileSize - 8) * (hp / 2));
         ctx.fillRect(x + 4, y + tileSize - 8, w, 4);
       }
+    });
+
+    // Power-ups
+    this.powerUps().forEach(p => {
+      const x = p.x, y = p.y;
+      ctx.fillStyle = '#f87171';
+      ctx.beginPath();
+      ctx.moveTo(x, y + 5);
+      ctx.arc(x - 4, y - 2, 4, Math.PI, 0, true);
+      ctx.arc(x + 4, y - 2, 4, Math.PI, 0, true);
+      ctx.lineTo(x, y + 5);
+      ctx.closePath();
+      ctx.fill();
     });
 
     this.cosmetics.forEach(b => {

@@ -83,6 +83,21 @@ services:
     networks:
       - battletanks-network
 
+  # EMQX MQTT broker for additional notifications
+  mqtt:
+    image: emqx/emqx:5.7.0
+    container_name: battletanks-emqx
+    restart: unless-stopped
+    environment:
+      EMQX_AUTH__ENABLE: "false"
+      EMQX_ALLOW_ANONYMOUS: "true"
+    ports:
+      - "1883:1883"
+      - "8083:8083"
+      - "18083:18083"
+    networks:
+      - battletanks-network
+
 volumes:
   postgres_data:
     driver: local

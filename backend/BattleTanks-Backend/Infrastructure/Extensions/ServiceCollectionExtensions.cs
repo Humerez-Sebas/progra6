@@ -45,8 +45,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IGameNotificationService, NoOpNotificationService>();
 
         services.AddSingleton<IMapService, InMemoryMapService>();
-        services.AddSingleton<IBulletService, InMemoryBulletService>(); 
-        services.AddHostedService<BulletSimulationService>();      
+        services.AddSingleton<IBulletService, InMemoryBulletService>();
+        services.AddSingleton<IMqttService, MqttService>();
+        services.AddSingleton<IPowerUpService, InMemoryPowerUpService>();
+        services.AddSingleton<BulletSimulationService>();
+        services.AddSingleton<ILifeService>(sp => sp.GetRequiredService<BulletSimulationService>());
+        services.AddHostedService(sp => sp.GetRequiredService<BulletSimulationService>());
         
         return services;
     }

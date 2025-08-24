@@ -1,5 +1,5 @@
 import { selectBullets, selectChat, selectHubConnected, selectJoined, selectPlayers, selectRoomCode } from './room.selectors';
-import { RoomState, roomPlayersAdapter, roomBulletsAdapter } from './room.reducer';
+import { RoomState, roomPlayersAdapter, roomBulletsAdapter, roomPowerUpsAdapter } from './room.reducer';
 import { MemoizedSelector } from '@ngrx/store';
 
 describe('Room Selectors', () => {
@@ -15,15 +15,20 @@ describe('Room Selectors', () => {
       { bulletId: 'b1', roomId: 'r1', shooterId: 'p1', x: 10, y: 20, directionRadians: 0, speed: 100, spawnTimestamp: 1, isActive: true },
     ], roomBulletsAdapter.getInitialState());
 
+    const powerUps = roomPowerUpsAdapter.getInitialState();
+
     const room: RoomState = {
+      roomId: 'r1',
       roomCode: 'ABCD',
       joined: true,
       hubConnected: true,
       error: null,
       players,
       bullets,
+      powerUps,
       chat: [],
       lastUsername: 'juan',
+      map: null,
     };
     state = { room };
   });

@@ -89,6 +89,11 @@ public class Player
         SessionKills++;
         SessionScore += points;
     }
+
+    public void AddScore(int points)
+    {
+        SessionScore += points;
+    }
     
     public void ResetSessionStats()
     {

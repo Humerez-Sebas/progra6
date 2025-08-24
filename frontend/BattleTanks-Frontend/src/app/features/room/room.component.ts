@@ -5,10 +5,11 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { roomActions } from './store/room.actions';
-import { selectHubConnected, selectJoined, selectRoomError } from './store/room.selectors';
+import { selectHubConnected, selectJoined, selectRoomError, selectRoomId, selectPlayers } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
+import { RoomService } from '../../core/services/room.service';
 
 @Component({
   standalone: true,
@@ -21,11 +22,14 @@ import { ChatPanelComponent } from './chat-panel/chat-panel.component';
 export class RoomComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private store = inject(Store);
+  private roomsHttp = inject(RoomService);
 
   hubConnected = toSignal(this.store.select(selectHubConnected), { initialValue: false });
   joined       = toSignal(this.store.select(selectJoined),       { initialValue: false });
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal(this.store.select(selectUser),         { initialValue: null });
+  roomId       = toSignal(this.store.select(selectRoomId),       { initialValue: null });
+  players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] });
 
   private roomCode = signal<string | null>(null);
 
@@ -49,5 +53,12 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.store.dispatch(roomActions.leaveRoom());
+  }
+
+  startGame() {
+    const id = this.roomId();
+    if (id) {
+      this.roomsHttp.startGame(id).subscribe();
+    }
   }
 }
