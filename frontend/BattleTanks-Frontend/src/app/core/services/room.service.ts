@@ -20,4 +20,8 @@ export class RoomService {
   getRoom(roomId: string) {
     return this.http.get<RoomStateDto>(`${this.base}/Rooms/${roomId}`);
   }
+
+  startGame(roomId: string) {
+    return this.http.post<RoomStateDto>(`${this.base}/Rooms/${roomId}/start`, {});
+  }
 }

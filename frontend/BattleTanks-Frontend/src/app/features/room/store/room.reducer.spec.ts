@@ -7,6 +7,7 @@ describe('Room Reducer', () => {
 
   beforeEach(() => {
     initial = {
+      roomId: null,
       roomCode: null,
       joined: false,
       hubConnected: false,
@@ -15,6 +16,7 @@ describe('Room Reducer', () => {
       bullets: roomBulletsAdapter.getInitialState(),
       chat: [],
       lastUsername: null,
+      map: null,
     };
   });
 

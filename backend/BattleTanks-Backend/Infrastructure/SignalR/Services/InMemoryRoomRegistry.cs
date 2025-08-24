@@ -18,17 +18,20 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         public bool IsPublic { get; set; }
         public string Status { get; set; } = GameRoomStatus.Waiting.ToString();
         public ConcurrentDictionary<string, PlayerStateDto> Players { get; } = new();
+        public int NextSpawn { get; set; }
     }
 
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IMapService _map;
 
     private readonly ConcurrentDictionary<string, Room> _byId = new();
     private readonly ConcurrentDictionary<string, string> _codeToId = new();
     private readonly ConcurrentDictionary<string, (string roomCode, string userId)> _connIndex = new();
 
-    public InMemoryRoomRegistry(IServiceScopeFactory scopeFactory)
+    public InMemoryRoomRegistry(IServiceScopeFactory scopeFactory, IMapService map)
     {
         _scopeFactory = scopeFactory;
+        _map = map;
     }
 
     public Task UpsertRoomAsync(string roomId, string roomCode, string name, int maxPlayers, bool isPublic, string status)
@@ -57,7 +60,10 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
     public async Task JoinAsync(string roomCode, string userId, string username, string connectionId)
     {
         var room = await EnsureRoomByCodeAsync(roomCode);
-        var state = new PlayerStateDto(userId, username, 0, 0, 0, 100, true);
+        var spawns = _map.GetSpawnPoints(room.RoomId);
+        var spawn = spawns[room.NextSpawn % spawns.Length];
+        room.NextSpawn++;
+        var state = new PlayerStateDto(userId, username, spawn.x, spawn.y, 0, 100, true);
         room.Players[userId] = state;
         _connIndex[connectionId] = (roomCode, userId);
     }

@@ -46,6 +46,8 @@ export class RoomEffects {
           this.hub.mapTileUpdated$.pipe(map((tile) => roomActions.mapTileUpdated({ tile }))),
           this.hub.playerLifeLost$.pipe(map((data) => roomActions.playerLifeLost({ data }))),
           this.hub.playerRespawned$.pipe(map((data) => roomActions.playerRespawned({ data }))),
+          this.hub.playerScored$.pipe(map((data) => roomActions.playerScored({ data }))),
+          this.hub.gameEnded$.pipe(map((data) => roomActions.gameEnded({ data }))),
         ).pipe(takeUntil(stop$));
       })
     )
@@ -128,9 +130,9 @@ export class RoomEffects {
             const match = list.find(r => r.roomCode === code);
             return match?.roomId ?? null;
           }),
-          switchMap((roomId) => roomId ? this.roomsHttp.getRoom(roomId) : of(null)),
-          map((room) => roomActions.rosterLoaded({ players: room?.players ?? [] })),
-          catchError(() => of(roomActions.rosterLoaded({ players: [] })))
+          switchMap((roomId) => roomId ? this.roomsHttp.getRoom(roomId).pipe(map(r => ({ room: r, roomId }))) : of({ room: null, roomId: null })),
+          map(({ room, roomId }) => roomActions.rosterLoaded({ players: room?.players ?? [], roomId })),
+          catchError(() => of(roomActions.rosterLoaded({ players: [], roomId: null })))
         )
       )
     )

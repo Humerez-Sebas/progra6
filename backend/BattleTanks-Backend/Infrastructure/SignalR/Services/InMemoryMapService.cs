@@ -95,6 +95,19 @@ public class InMemoryMapService : IMapService
         return true;
     }
 
+    public (float x, float y)[] GetSpawnPoints(string roomId)
+    {
+        var (w, h) = GetSize(roomId);
+        var ts = TileSize;
+        return new (float, float)[]
+        {
+            (ts * 2f, ts * 2f),
+            (ts * (w - 3), ts * 2f),
+            (ts * 2f, ts * (h - 3)),
+            (ts * (w - 3), ts * (h - 3))
+        };
+    }
+
     private MapSnapshotDto GenerateDefault(string roomId)
     {
         var tiles = new List<MapTileDto>();
@@ -110,11 +123,21 @@ public class InMemoryMapService : IMapService
             tiles.Add(new MapTileDto(_defaultWidthTiles - 1, y, MapTileType.WallIndestructible, 0));
         }
         
-        var midY = _defaultHeightTiles / 2;
-        for (int x = 3; x < _defaultWidthTiles - 3; x += 4)
+        for (int x = 2; x < _defaultWidthTiles - 2; x += 2)
         {
-            tiles.Add(new MapTileDto(x, midY, MapTileType.WallDestructible, 2));
+            for (int y = 2; y < _defaultHeightTiles - 2; y += 2)
+            {
+                tiles.Add(new MapTileDto(x, y, MapTileType.WallDestructible, 2));
+            }
         }
+
+        var centerX = _defaultWidthTiles / 2;
+        var centerY = _defaultHeightTiles / 2;
+        tiles.Add(new MapTileDto(centerX, centerY, MapTileType.WallIndestructible, 0));
+        tiles.Add(new MapTileDto(centerX - 1, centerY, MapTileType.WallIndestructible, 0));
+        tiles.Add(new MapTileDto(centerX + 1, centerY, MapTileType.WallIndestructible, 0));
+        tiles.Add(new MapTileDto(centerX, centerY - 1, MapTileType.WallIndestructible, 0));
+        tiles.Add(new MapTileDto(centerX, centerY + 1, MapTileType.WallIndestructible, 0));
 
         return new MapSnapshotDto(roomId, _defaultWidthTiles, _defaultHeightTiles, _defaultTileSize, tiles);
     }

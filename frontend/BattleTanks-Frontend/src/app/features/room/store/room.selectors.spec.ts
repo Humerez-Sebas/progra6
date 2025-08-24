@@ -16,6 +16,7 @@ describe('Room Selectors', () => {
     ], roomBulletsAdapter.getInitialState());
 
     const room: RoomState = {
+      roomId: 'r1',
       roomCode: 'ABCD',
       joined: true,
       hubConnected: true,
@@ -24,6 +25,7 @@ describe('Room Selectors', () => {
       bullets,
       chat: [],
       lastUsername: 'juan',
+      map: null,
     };
     state = { room };
   });

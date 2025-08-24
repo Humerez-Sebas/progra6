@@ -4,6 +4,7 @@ import { roomBulletsAdapter, roomPlayersAdapter, RoomState } from './room.reduce
 export const selectRoomState = createFeatureSelector<RoomState>('room');
 
 export const selectRoomCode = createSelector(selectRoomState, (s) => s.roomCode);
+export const selectRoomId = createSelector(selectRoomState, (s) => s.roomId);
 export const selectHubConnected = createSelector(selectRoomState, (s) => s.hubConnected);
 export const selectJoined = createSelector(selectRoomState, (s) => s.joined);
 export const selectRoomError = createSelector(selectRoomState, (s) => s.error);

@@ -15,4 +15,8 @@ public interface IGameService
     Task<RoomStateDto?> GetRoomByCode(string roomCode);
     Task<PlayerStateDto?> GetPlayerState(string roomId, string userId);
     Task<List<RoomStateDto>> GetActiveRooms();
+
+    Task AwardWallPoints(string roomId, string userId, int points);
+    Task RegisterKill(string roomId, string shooterId, string targetId, int points);
+    Task EndGame(string roomId);
 }

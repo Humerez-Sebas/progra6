@@ -13,6 +13,7 @@ export interface PlayerEntity extends PlayerStateDto {}
 export interface BulletEntity extends BulletStateDto {}
 
 export interface RoomState {
+  roomId: string | null;
   roomCode: string | null;
   joined: boolean;
   hubConnected: boolean;
@@ -34,6 +35,7 @@ const playersAdapter = createEntityAdapter<PlayerEntity>({ selectId: (p) => p.pl
 const bulletsAdapter = createEntityAdapter<BulletEntity>({ selectId: (b) => b.bulletId });
 
 const initialState: RoomState = {
+  roomId: null,
   roomCode: null,
   joined: false,
   hubConnected: false,
@@ -139,6 +141,7 @@ export const roomReducer = createReducer(
       ...p,
       // health visual si quieres (no sabemos max HP exacto; usamos bool eliminated)
       isAlive: !data.eliminated,
+      lives: data.livesAfter,
     };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
@@ -154,6 +157,15 @@ export const roomReducer = createReducer(
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
 
+  on(roomActions.playerScored, (s, { data }) => {
+    const p = s.players.entities[data.playerId];
+    const updated: PlayerStateDto = {
+      ...(p ?? { playerId: data.playerId, username: 'Player', rotation: 0, health: 100, isAlive: true, x: 0, y: 0 }),
+      score: data.score,
+    };
+    return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
+  }),
+
   // Balas
   on(roomActions.bulletSpawned, (s, { bullet }) => ({
     ...s,
@@ -165,8 +177,9 @@ export const roomReducer = createReducer(
   })),
 
   // Roster HTTP
-  on(roomActions.rosterLoaded, (s, { players }) => ({
+  on(roomActions.rosterLoaded, (s, { players, roomId }) => ({
     ...s,
+    roomId: roomId ?? s.roomId,
     players: playersAdapter.upsertMany(players, s.players),
   })),
 
@@ -174,6 +187,19 @@ export const roomReducer = createReducer(
     ...s,
     chat: [...s.chat, msg].slice(-200),
   })),
+
+  on(roomActions.gameEnded, (s, { data }) => {
+    let players = s.players;
+    for (const sc of data.scores) {
+      const ex = players.entities[sc.playerId];
+      const up: PlayerStateDto = {
+        ...(ex ?? { playerId: sc.playerId, username: 'Player', rotation: 0, health: 100, isAlive: true, x: 0, y: 0 }),
+        score: sc.score,
+      };
+      players = playersAdapter.upsertOne(up, players);
+    }
+    return { ...s, players };
+  }),
 );
 
 export const roomPlayersAdapter = playersAdapter;

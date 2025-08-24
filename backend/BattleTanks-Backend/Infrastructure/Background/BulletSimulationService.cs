@@ -16,9 +16,11 @@ public class BulletSimulationService : BackgroundService
     private readonly IMapService _map;
     private readonly IRoomRegistry _rooms;
     private readonly IHubContext<GameHub> _hub;
+    private readonly IGameService _game;
 
 
     private readonly Dictionary<string, Dictionary<string, int>> _lives = new();
+    private readonly Dictionary<string, Dictionary<string, int>> _scores = new();
 
     private const float BulletRadius = 2.5f;
     private const float TankHalfW = 12f;
@@ -29,13 +31,15 @@ public class BulletSimulationService : BackgroundService
         IBulletService bullets,
         IMapService map,
         IRoomRegistry rooms,
-        IHubContext<GameHub> hub)
+        IHubContext<GameHub> hub,
+        IGameService game)
     {
         _log = log;
         _bullets = bullets;
         _map = map;
         _rooms = rooms;
         _hub = hub;
+        _game = game;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -103,6 +107,14 @@ public class BulletSimulationService : BackgroundService
                         type = (int)updated.Type,
                         hp = updated.Hp
                     });
+
+                    var scores = GetScoreDict(snap.RoomId);
+                    var sc = scores.TryGetValue(b.ShooterId, out var prevScore) ? prevScore : 0;
+                    sc += 50;
+                    scores[b.ShooterId] = sc;
+                    _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
+                        new PlayerScoredDto(b.ShooterId, sc));
+                    _ = _game.AwardWallPoints(snap.RoomId, b.ShooterId, 50);
                 }
 
                 _bullets.Despawn(roomCode, bulletId);
@@ -121,15 +133,40 @@ public class BulletSimulationService : BackgroundService
                 _ = _hub.Clients.Group(roomCode).SendAsync("playerLifeLost",
                     new PlayerLifeLostDto(hitPlayerId, l, l == 0));
 
+                var scores = GetScoreDict(snap.RoomId);
+                var sc = scores.TryGetValue(b.ShooterId, out var prevScore) ? prevScore : 0;
+                if (l == 0)
+                {
+                    sc += 150;
+                    scores[b.ShooterId] = sc;
+                    _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
+                        new PlayerScoredDto(b.ShooterId, sc));
+                    _ = _game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150);
+                }
+
                 _bullets.Despawn(roomCode, bulletId);
                 _ = _hub.Clients.Group(roomCode).SendAsync("bulletDespawned", bulletId, "hit");
 
                 if (l > 0)
                 {
-                    var rx = ts * 2f;
-                    var ry = ts * 2f;
+                    var spawns = _map.GetSpawnPoints(snap.RoomId);
+                    var rnd = new Random();
+                    var spawn = spawns[rnd.Next(spawns.Length)];
+                    _ = _rooms.UpdatePlayerPositionAsync(roomCode, hitPlayerId, spawn.x, spawn.y, 0f);
                     _ = _hub.Clients.Group(roomCode).SendAsync("playerRespawned",
-                        new PlayerRespawnedDto(hitPlayerId, rx, ry));
+                        new PlayerRespawnedDto(hitPlayerId, spawn.x, spawn.y));
+                }
+                else
+                {
+                    var remaining = lives.Values.Count(v => v > 0);
+                    if (remaining <= 1)
+                    {
+                        var winner = scores.OrderByDescending(k => k.Value).FirstOrDefault().Key ?? hitPlayerId;
+                        _ = _game.EndGame(snap.RoomId);
+                        var final = scores.Select(kvp => new PlayerScoreDto(kvp.Key, kvp.Value)).ToList();
+                        _ = _hub.Clients.Group(roomCode).SendAsync("gameEnded",
+                            new GameEndedDto(winner, final));
+                    }
                 }
                 continue;
             }
@@ -167,6 +204,16 @@ public class BulletSimulationService : BackgroundService
         {
             d = new Dictionary<string, int>();
             _lives[roomId] = d;
+        }
+        return d;
+    }
+
+    private Dictionary<string, int> GetScoreDict(string roomId)
+    {
+        if (!_scores.TryGetValue(roomId, out var d))
+        {
+            d = new Dictionary<string, int>();
+            _scores[roomId] = d;
         }
         return d;
     }

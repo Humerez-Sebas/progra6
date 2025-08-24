@@ -11,6 +11,8 @@ import {
   MapTileDto,
   PlayerLifeLostDto,
   PlayerRespawnedDto,
+  PlayerScoredDto,
+  GameEndedDto,
   RoomSnapshotDto,
 } from '../models/game.models';
 
@@ -30,6 +32,8 @@ export class SignalRService {
   readonly mapTileUpdated$ = new Subject<MapTileDto>();
   readonly playerLifeLost$ = new Subject<PlayerLifeLostDto>();
   readonly playerRespawned$ = new Subject<PlayerRespawnedDto>();
+  readonly playerScored$ = new Subject<PlayerScoredDto>();
+  readonly gameEnded$ = new Subject<GameEndedDto>();
 
   readonly reconnected$ = new Subject<void>();
   readonly disconnected$ = new Subject<void>();
@@ -62,6 +66,8 @@ export class SignalRService {
     this.hub.on('mapTileUpdated', (tile: MapTileDto) => this.mapTileUpdated$.next(tile));
     this.hub.on('playerLifeLost', (data: PlayerLifeLostDto) => this.playerLifeLost$.next(data));
     this.hub.on('playerRespawned', (data: PlayerRespawnedDto) => this.playerRespawned$.next(data));
+    this.hub.on('playerScored', (data: PlayerScoredDto) => this.playerScored$.next(data));
+    this.hub.on('gameEnded', (data: GameEndedDto) => this.gameEnded$.next(data));
 
     this.hub.onreconnected(() => this.reconnected$.next());
     this.hub.onclose(() => this.disconnected$.next());

@@ -2,7 +2,10 @@
   <div class="w-full max-w-6xl pixel-card p-4 relative">
     <div class="flex items-center justify-between mb-4">
       <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
-      <a routerLink="/lobby" class="text-emerald-200 underline text-xs">Volver al lobby</a>
+      <div class="space-x-2 flex items-center">
+        <button (click)="startGame()" class="text-xs px-2 py-1 bg-emerald-700 text-white rounded">Start Game</button>
+        <a routerLink="/lobby" class="text-emerald-200 underline text-xs">Volver al lobby</a>
+      </div>
     </div>
 
     @if (error(); as err) {

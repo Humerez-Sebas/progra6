@@ -8,6 +8,8 @@ import {
   MapTileDto,
   PlayerLifeLostDto,
   PlayerRespawnedDto,
+  PlayerScoredDto,
+  GameEndedDto,
   RoomSnapshotDto,
 } from '../../../core/models/game.models';
 
@@ -27,7 +29,7 @@ export const roomActions = createActionGroup({
     'Leave Room': emptyProps(),
     'Left': emptyProps(),
 
-    'Roster Loaded': props<{ players: PlayerStateDto[] }>(),
+    'Roster Loaded': props<{ players: PlayerStateDto[]; roomId: string | null }>(),
 
     // Snapshots nuevos
     'Room Snapshot Received': props<{ snapshot: RoomSnapshotDto }>(),
@@ -41,6 +43,8 @@ export const roomActions = createActionGroup({
     'Bullet Despawned': props<{ bulletId: string }>(),
     'Player Life Lost': props<{ data: PlayerLifeLostDto }>(),
     'Player Respawned': props<{ data: PlayerRespawnedDto }>(),
+    'Player Scored': props<{ data: PlayerScoredDto }>(),
+    'Game Ended': props<{ data: GameEndedDto }>(),
     'Message Received': props<{ msg: ChatMessageDto }>(),
 
     // Cliente→servidor
