@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { env } from '../utils/env';
-import { RegisterDto, LoginDto, UserDto, VerifyResponse } from '../models/auth.models';
+import { RegisterDto, LoginDto, UserDto, VerifyResponse, AuthResponse } from '../models/auth.models';
+import { map } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -10,11 +11,15 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   register(dto: RegisterDto) {
-    return this.http.post<UserDto>(`${this.base}/auth/register`, dto);
+    return this.http
+      .post<AuthResponse>(`${this.base}/auth/register`, dto)
+      .pipe(map((res) => res.user));
   }
 
   login(dto: LoginDto) {
-    return this.http.post<UserDto>(`${this.base}/auth/login`, dto);
+    return this.http
+      .post<AuthResponse>(`${this.base}/auth/login`, dto)
+      .pipe(map((res) => res.user));
   }
 
   logout() {
@@ -22,7 +27,9 @@ export class AuthService {
   }
 
   profile() {
-    return this.http.get<UserDto>(`${this.base}/auth/profile`);
+    return this.http
+      .get<AuthResponse>(`${this.base}/auth/profile`)
+      .pipe(map((res) => res.user));
   }
 
   verify() {
