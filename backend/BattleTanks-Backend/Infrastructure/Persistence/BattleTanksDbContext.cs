@@ -42,7 +42,11 @@ public class BattleTanksDbContext : DbContext
             entity.Property(e => e.Code).IsRequired().HasMaxLength(10);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Status).HasConversion<string>();
+            entity.Property(e => e.Region).IsRequired().HasMaxLength(50);
             entity.HasIndex(e => e.Code).IsUnique();
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.Region);
+            entity.HasIndex(e => new { e.Region, e.Status, e.IsPublic });
             entity.Property(e => e.IsPublic).IsRequired().HasDefaultValue(true);
         });
 

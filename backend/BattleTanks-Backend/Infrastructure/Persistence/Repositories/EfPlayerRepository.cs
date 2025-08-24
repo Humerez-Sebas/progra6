@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Domain.Entities;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -16,6 +17,7 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task<Player?> GetByIdAsync(Guid id)
     {
         return await _context.Players
+            .AsNoTracking()
             .Include(p => p.User)
             .Include(p => p.GameSession)
             .FirstOrDefaultAsync(p => p.Id == id);
@@ -24,6 +26,7 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task<Player?> GetByUserIdAsync(Guid userId)
     {
         return await _context.Players
+            .AsNoTracking()
             .Include(p => p.User)
             .Include(p => p.GameSession)
             .FirstOrDefaultAsync(p => p.UserId == userId);
@@ -32,6 +35,7 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task<Player?> GetByConnectionIdAsync(string connectionId)
     {
         return await _context.Players
+            .AsNoTracking()
             .Include(p => p.User)
             .Include(p => p.GameSession)
             .FirstOrDefaultAsync(p => p.ConnectionId == connectionId);
@@ -40,6 +44,7 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task<List<Player>> GetByGameSessionIdAsync(Guid gameSessionId)
     {
         return await _context.Players
+            .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.GameSessionId == gameSessionId)
             .ToListAsync();
@@ -48,6 +53,7 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task<Player?> GetActivePlayerByUserIdAsync(Guid userId)
     {
         return await _context.Players
+            .AsNoTracking()
             .Include(p => p.User)
             .Include(p => p.GameSession)
             .FirstOrDefaultAsync(p => p.UserId == userId && p.GameSessionId != null);
@@ -78,10 +84,10 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task DeleteByUserIdAsync(Guid userId)
     {
         var players = await _context.Players
+            .AsNoTracking()
             .Where(p => p.UserId == userId)
             .ToListAsync();
 
-        _context.Players.RemoveRange(players);
-        await _context.SaveChangesAsync();
+        await _context.BulkDeleteAsync(players);
     }
 }

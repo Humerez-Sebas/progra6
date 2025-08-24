@@ -29,7 +29,7 @@ public class GameService : IGameService
 
     public async Task<RoomStateDto?> CreateRoom(string userId, CreateRoomDto createRoomDto)
     {
-        var session = GameSession.Create(createRoomDto.Name, createRoomDto.MaxPlayers, createRoomDto.IsPublic);
+        var session = GameSession.Create(createRoomDto.Name, createRoomDto.Region, createRoomDto.MaxPlayers, createRoomDto.IsPublic);
         await _gameSessionRepository.AddAsync(session);
 
         return MapToRoomStateDto(session);
@@ -227,9 +227,9 @@ public class GameService : IGameService
         return player != null ? MapToPlayerStateDto(player) : null;
     }
 
-    public async Task<List<RoomStateDto>> GetActiveRooms()
+    public async Task<List<RoomStateDto>> GetActiveRooms(string? region = null)
     {
-        var sessions = await _gameSessionRepository.GetActiveSessionsAsync();
+        var sessions = await _gameSessionRepository.GetActiveSessionsAsync(region);
         return sessions.Select(MapToRoomStateDto).ToList();
     }
 
@@ -291,6 +291,7 @@ public class GameService : IGameService
         return new RoomStateDto(
             session.Id.ToString(),
             session.Code,
+            session.Region,
             session.Status.ToString(),
             session.Players.Select(MapToPlayerStateDto).ToList()
         );

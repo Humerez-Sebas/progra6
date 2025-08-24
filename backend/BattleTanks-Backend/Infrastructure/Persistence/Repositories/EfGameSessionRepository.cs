@@ -17,6 +17,7 @@ public class EfGameSessionRepository : IGameSessionRepository
     public async Task<GameSession?> GetByIdAsync(Guid id)
     {
         return await _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .Include(gs => gs.Scores)
             .FirstOrDefaultAsync(gs => gs.Id == id);
@@ -25,15 +26,22 @@ public class EfGameSessionRepository : IGameSessionRepository
     public async Task<GameSession?> GetByCodeAsync(string code)
     {
         return await _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .FirstOrDefaultAsync(gs => gs.Code == code);
     }
 
-    public async Task<List<GameSession>> GetActiveSessionsAsync()
+    public async Task<List<GameSession>> GetActiveSessionsAsync(string? region = null)
     {
-        return await _context.GameSessions
+        var query = _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
-            .Where(gs => gs.Status == GameRoomStatus.Waiting || gs.Status == GameRoomStatus.InProgress)
+            .Where(gs => gs.Status == GameRoomStatus.Waiting || gs.Status == GameRoomStatus.InProgress);
+
+        if (!string.IsNullOrEmpty(region))
+            query = query.Where(gs => gs.Region == region);
+
+        return await query
             .OrderByDescending(gs => gs.CreatedAt)
             .ToListAsync();
     }
@@ -41,6 +49,7 @@ public class EfGameSessionRepository : IGameSessionRepository
     public async Task<List<GameSession>> GetSessionsByStatusAsync(GameRoomStatus status)
     {
         return await _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .Where(gs => gs.Status == status)
             .OrderByDescending(gs => gs.CreatedAt)
@@ -50,6 +59,7 @@ public class EfGameSessionRepository : IGameSessionRepository
     public async Task<GameSession?> GetSessionWithPlayersAsync(Guid id)
     {
         return await _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .Include(gs => gs.Scores)
             .FirstOrDefaultAsync(gs => gs.Id == id);
@@ -77,9 +87,10 @@ public class EfGameSessionRepository : IGameSessionRepository
         }
     }
 
-    public async Task<(List<GameSession> Items, int Total)> GetSessionsPagedAsync(bool onlyPublic, int page, int pageSize, GameRoomStatus? status = null)
+    public async Task<(List<GameSession> Items, int Total)> GetSessionsPagedAsync(bool onlyPublic, int page, int pageSize, GameRoomStatus? status = null, string? region = null)
     {
         var query = _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .AsQueryable();
 
@@ -88,6 +99,9 @@ public class EfGameSessionRepository : IGameSessionRepository
 
         if (onlyPublic)
             query = query.Where(gs => gs.IsPublic);
+
+        if (!string.IsNullOrEmpty(region))
+            query = query.Where(gs => gs.Region == region);
 
         var total = await query.CountAsync();
 

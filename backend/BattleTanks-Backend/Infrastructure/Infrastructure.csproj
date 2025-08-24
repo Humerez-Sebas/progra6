@@ -24,6 +24,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
     <PackageReference Include="MQTTnet" Version="4.3.6" />
     <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="8.1.0" />
   </ItemGroup>
 
 </Project>

@@ -16,12 +16,14 @@ public class EfChatRepository : IChatRepository
     public async Task<ChatMessage?> GetByIdAsync(Guid id)
     {
         return await _context.ChatMessages
+            .AsNoTracking()
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<List<ChatMessage>> GetRoomMessagesAsync(Guid roomId, int limit = 50)
     {
         return await _context.ChatMessages
+            .AsNoTracking()
             .Where(m => m.RoomId == roomId)
             .OrderByDescending(m => m.SentAt)
             .Take(limit)

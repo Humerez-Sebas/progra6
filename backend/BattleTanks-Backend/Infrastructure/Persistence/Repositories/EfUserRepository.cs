@@ -16,6 +16,7 @@ public class EfUserRepository : IUserRepository
     public async Task<User?> GetByIdAsync(Guid id)
     {
         return await _context.Users
+            .AsNoTracking()
             .Include(u => u.Scores)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
@@ -23,18 +24,21 @@ public class EfUserRepository : IUserRepository
     public async Task<User?> GetByUsernameAsync(string username)
     {
         return await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Username == username);
     }
 
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email.ToLowerInvariant());
     }
 
     public async Task<List<User>> GetTopPlayersByScoreAsync(int limit = 10)
     {
         return await _context.Users
+            .AsNoTracking()
             .OrderByDescending(u => u.TotalScore)
             .ThenByDescending(u => u.GamesWon)
             .Take(limit)
@@ -44,12 +48,14 @@ public class EfUserRepository : IUserRepository
     public async Task<bool> ExistsByUsernameAsync(string username)
     {
         return await _context.Users
+            .AsNoTracking()
             .AnyAsync(u => u.Username == username);
     }
 
     public async Task<bool> ExistsByEmailAsync(string email)
     {
         return await _context.Users
+            .AsNoTracking()
             .AnyAsync(u => u.Email == email.ToLowerInvariant());
     }
 

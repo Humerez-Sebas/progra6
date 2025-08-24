@@ -8,5 +8,6 @@ public class RoomsQuery
     public int PageSize { get; set; } = 20;
     public bool OnlyPublic { get; set; } = true;
     public GameRoomStatus? Status { get; set; }
+    public string? Region { get; set; }
 }
 

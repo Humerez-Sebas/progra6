@@ -31,7 +31,7 @@ public class RoomsController : ControllerBase
         if (query.Page < 1 || query.PageSize < 1 || query.PageSize > 100)
             return BadRequest(new { success = false, message = "Invalid pagination parameters" });
 
-        var (items, total) = await _gameSessionRepository.GetSessionsPagedAsync(query.OnlyPublic, query.Page, query.PageSize, query.Status);
+        var (items, total) = await _gameSessionRepository.GetSessionsPagedAsync(query.OnlyPublic, query.Page, query.PageSize, query.Status, query.Region);
 
         // Enriquecer cada room con los jugadores actuales desde RoomRegistry
         var roomsTasks = items.Select(async s =>
@@ -52,6 +52,7 @@ public class RoomsController : ControllerBase
             return new RoomStateDto(
                 s.Id.ToString(),
                 s.Code,
+                s.Region,
                 s.Status.ToString(),
                 players
             );
@@ -82,6 +83,7 @@ public class RoomsController : ControllerBase
             room = new RoomStateDto(
                 room.RoomId,
                 room.RoomCode,
+                room.Region,
                 room.Status,
                 snap.Players.Values.ToList()
             );
