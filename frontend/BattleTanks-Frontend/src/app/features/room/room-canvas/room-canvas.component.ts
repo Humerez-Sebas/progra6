@@ -118,6 +118,11 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
     const h = ms.height * ms.tileSize || 600;
     canvas.width = w;
     canvas.height = h;
+
+    // Scale the canvas to fit within the available viewport so the whole map is visible
+    const scale = Math.min(window.innerWidth / w, window.innerHeight / h, 1);
+    canvas.style.width = `${w * scale}px`;
+    canvas.style.height = `${h * scale}px`;
   }
 
   @HostListener('window:keydown', ['$event'])
