@@ -7,5 +7,7 @@ public record PlayerStateDto(
     float Y,
     float Rotation,
     int Health,
-    bool IsAlive
+    bool IsAlive,
+    int Lives = 3,
+    int Score = 0
 );

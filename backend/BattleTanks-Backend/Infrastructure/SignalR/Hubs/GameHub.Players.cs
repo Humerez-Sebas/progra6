@@ -51,11 +51,20 @@ public partial class GameHub : Hub
         _tracker.Set(Context.ConnectionId, roomSnap!.RoomId, roomCode, userId, uname);
         await Clients.Group(roomCode).SendAsync("playerJoined", new { userId, username = uname });
 
+        var players = roomSnap.Players.Values
+            .Select(p =>
+            {
+                var lives = _lifeService.GetLives(roomSnap.RoomId, p.PlayerId);
+                var score = _lifeService.GetScore(roomSnap.RoomId, p.PlayerId);
+                return p with { Lives = lives, Score = score, IsAlive = lives > 0 && p.IsAlive };
+            })
+            .ToArray();
+
         await Clients.Caller.SendAsync("roomSnapshot", new
         {
             roomId = roomSnap.RoomId,
             roomCode = roomSnap.RoomCode,
-            players = roomSnap.Players.Values.ToArray()
+            players
         });
 
         var mapSnap = await _map.GetSnapshotAsync(roomSnap.RoomId);

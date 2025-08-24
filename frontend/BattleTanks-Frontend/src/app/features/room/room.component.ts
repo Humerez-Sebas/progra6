@@ -32,6 +32,8 @@ export class RoomComponent implements OnInit, OnDestroy {
   players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] });
 
   private roomCode = signal<string | null>(null);
+  gameOver = signal(false);
+  stats = signal<{ score: number } | null>(null);
 
   // 👇 Efecto creado como *campo de clase* (válido en contexto de inyección)
   private joinWhenReady = effect(() => {
@@ -42,6 +44,17 @@ export class RoomComponent implements OnInit, OnDestroy {
 
     if (connected && !alreadyJoined && code) {
       this.store.dispatch(roomActions.joinRoom({ code, username }));
+    }
+  });
+
+  private watchElimination = effect(() => {
+    const me = this.user();
+    const plist = this.players();
+    if (!me) return;
+    const mine = plist.find(p => p.playerId === me.id);
+    if (mine && mine.lives === 0 && !this.gameOver()) {
+      this.gameOver.set(true);
+      this.stats.set({ score: mine.score ?? 0 });
     }
   });
 

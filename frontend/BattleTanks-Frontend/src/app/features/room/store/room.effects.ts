@@ -7,7 +7,6 @@ import { Store } from '@ngrx/store';
 import { selectRoomCode } from './room.selectors';
 import { selectUser } from '../../auth/store/auth.selectors';
 import { RoomService } from '../../../core/services/room.service';
-import { RoomStateDto } from '../../../core/models/room.models';
 
 @Injectable()
 export class RoomEffects {
@@ -60,8 +59,16 @@ export class RoomEffects {
     this.actions$.pipe(
       ofType(roomActions.joinRoom),
       switchMap(({ code, username }) =>
-        from(this.hub.joinRoom(code, username)).pipe(
-          map(() => roomActions.joined()),
+        this.roomsHttp.joinRoom({ roomCode: code }).pipe(
+          switchMap((room) =>
+            from(this.hub.joinRoom(code, username)).pipe(
+              mergeMap(() => [
+                roomActions.joined(),
+                roomActions.rosterLoaded({ players: room.players ?? [], roomId: room.roomId })
+              ]),
+              catchError((err) => of(roomActions.hubError({ error: err?.message ?? 'join_failed' })))
+            )
+          ),
           catchError((err) => of(roomActions.hubError({ error: err?.message ?? 'join_failed' })))
         )
       )
@@ -121,25 +128,7 @@ export class RoomEffects {
     { dispatch: false }
   );
 
-  rosterAfterJoin$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(roomActions.joined),
-      withLatestFrom(this.store.select(selectRoomCode)),
-      filter(([_, code]) => !!code),
-      switchMap(([_, code]) =>
-        this.roomsHttp.getRooms().pipe(
-          map((res: any) => {
-            const list: RoomStateDto[] = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
-            const match = list.find(r => r.roomCode === code);
-            return match?.roomId ?? null;
-          }),
-          switchMap((roomId) => roomId ? this.roomsHttp.getRoom(roomId).pipe(map(r => ({ room: r, roomId }))) : of({ room: null, roomId: null })),
-          map(({ room, roomId }) => roomActions.rosterLoaded({ players: room?.players ?? [], roomId })),
-          catchError(() => of(roomActions.rosterLoaded({ players: [], roomId: null })))
-        )
-      )
-    )
-  );
+  // Previous rosterAfterJoin$ effect removed; HTTP join already provides roster information
 
   logBulletCollisions$ = createEffect(
     () =>

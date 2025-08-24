@@ -6,6 +6,10 @@ export interface CreateRoomDto {
   isPublic: boolean;
 }
 
+export interface JoinRoomDto {
+  roomCode: string;
+}
+
 export interface RoomStateDto {
   roomId: string;
   roomCode: string;

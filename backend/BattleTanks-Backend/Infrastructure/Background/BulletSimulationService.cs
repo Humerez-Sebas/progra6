@@ -137,14 +137,11 @@ public class BulletSimulationService : BackgroundService, ILifeService
 
                 var scores = GetScoreDict(snap.RoomId);
                 var sc = scores.TryGetValue(b.ShooterId, out var prevScore) ? prevScore : 0;
-                if (l == 0)
-                {
-                    sc += 150;
-                    scores[b.ShooterId] = sc;
-                    _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
-                        new PlayerScoredDto(b.ShooterId, sc));
-                    InvokeGameService(game => game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150));
-                }
+                sc += 150;
+                scores[b.ShooterId] = sc;
+                _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
+                    new PlayerScoredDto(b.ShooterId, sc));
+                InvokeGameService(game => game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150));
 
                 _bullets.Despawn(roomCode, bulletId);
                 _ = _hub.Clients.Group(roomCode).SendAsync("bulletDespawned", bulletId, "hit");
@@ -223,6 +220,12 @@ public class BulletSimulationService : BackgroundService, ILifeService
     {
         var lives = GetLivesDict(roomId);
         return lives.TryGetValue(playerId, out var l) ? l : 3;
+    }
+
+    public int GetScore(string roomId, string playerId)
+    {
+        var scores = GetScoreDict(roomId);
+        return scores.TryGetValue(playerId, out var s) ? s : 0;
     }
 
     private Dictionary<string, int> GetLivesDict(string roomId)
