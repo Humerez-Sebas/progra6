@@ -12,7 +12,6 @@ public class Player
     public float Rotation { get; private set; }
     public DateTime LastUpdate { get; private set; }
     public bool IsAlive { get; private set; }
-    public int Health { get; private set; }
     public int SessionKills { get; private set; }
     public int SessionDeaths { get; private set; }
     public int SessionScore { get; private set; }
@@ -34,7 +33,6 @@ public class Player
             Rotation = 0,
             LastUpdate = DateTime.UtcNow,
             IsAlive = true,
-            Health = 100,
             SessionKills = 0,
             SessionDeaths = 0,
             SessionScore = 0
@@ -66,20 +64,16 @@ public class Player
         LastUpdate = DateTime.UtcNow;
     }
     
-    public void TakeDamage(int damage)
+    public void RegisterDeath()
     {
-        Health = Math.Max(0, Health - damage);
-        if (Health == 0)
-        {
-            IsAlive = false;
-            SessionDeaths++;
-        }
+        IsAlive = false;
+        SessionDeaths++;
+        LastUpdate = DateTime.UtcNow;
     }
-    
+
     public void Respawn(Position position)
     {
         Position = position;
-        Health = 100;
         IsAlive = true;
         LastUpdate = DateTime.UtcNow;
     }

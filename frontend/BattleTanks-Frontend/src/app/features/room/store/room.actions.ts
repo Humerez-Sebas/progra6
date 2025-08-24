@@ -37,7 +37,7 @@ export const roomActions = createActionGroup({
     
     'Player Joined': props<{ userId: string; username: string }>(),
     'Player Left': props<{ userId: string }>(),
-    'Player Moved': props<{ player: PlayerStateDto | { playerId: string; x: number; y: number; rotation: number; health?: number; isAlive?: boolean; username?: string } }>(),
+    'Player Moved': props<{ player: PlayerStateDto | { playerId: string; x: number; y: number; rotation: number; isAlive?: boolean; username?: string } }>(),
     'Bullet Spawned': props<{ bullet: BulletStateDto }>(),
     'Bullet Despawned': props<{ bulletId: string; reason?: string }>(),
     'Player Life Lost': props<{ data: PlayerLifeLostDto }>(),

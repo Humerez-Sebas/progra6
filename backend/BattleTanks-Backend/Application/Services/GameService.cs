@@ -256,7 +256,7 @@ public class GameService : IGameService
         if (shooter is null || target is null) return;
 
         shooter.AddKill(points);
-        target.TakeDamage(100);
+        target.RegisterDeath();
         await _playerRepository.UpdateAsync(shooter);
         await _playerRepository.UpdateAsync(target);
         await _gameSessionRepository.UpdateAsync(session);
@@ -277,7 +277,7 @@ public class GameService : IGameService
             var user = await _userRepository.GetByIdAsync(score.UserId);
             if (user != null)
             {
-                user.AddGameResult(score.IsWinner, score.Points);
+                user.AddGameResult(score.IsWinner, score.Points, score.Kills);
                 await _userRepository.UpdateAsync(user);
             }
         }
@@ -304,7 +304,6 @@ public class GameService : IGameService
             player.Position.X,
             player.Position.Y,
             player.Rotation,
-            player.Health,
             player.IsAlive
         );
     }

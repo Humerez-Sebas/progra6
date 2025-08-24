@@ -12,13 +12,15 @@ public class InMemoryPowerUpService : IPowerUpService
 {
     private readonly IMapService _map;
     private readonly IMqttService _mqtt;
+    private readonly IRedisService _redis;
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, PowerUpDto>> _byRoom = new();
     private readonly Random _rand = new();
 
-    public InMemoryPowerUpService(IMapService map, IMqttService mqtt)
+    public InMemoryPowerUpService(IMapService map, IMqttService mqtt, IRedisService redis)
     {
         _map = map;
         _mqtt = mqtt;
+        _redis = redis;
     }
 
     public PowerUpDto SpawnRandom(string roomCode, string roomId)
@@ -43,8 +45,9 @@ public class InMemoryPowerUpService : IPowerUpService
         var room = _byRoom.GetOrAdd(roomCode, _ => new ConcurrentDictionary<string, PowerUpDto>());
         room[powerUp.Id] = powerUp;
 
-        _ = _mqtt.PublishAsync("powerups/spawned", JsonSerializer.Serialize(powerUp));
-        Console.WriteLine("---------------------------------------------------------------------- se mando por mqtt el spawn de un powerup");
+        var payload = JsonSerializer.Serialize(powerUp);
+        _ = _mqtt.PublishAsync("powerups/spawned", payload);
+        _ = _redis.SaveAsync("powerups", payload);
         return powerUp;
     }
 
@@ -67,7 +70,9 @@ public class InMemoryPowerUpService : IPowerUpService
             {
                 room.TryRemove(kvp.Key, out _);
                 powerUp = p;
-                _ = _mqtt.PublishAsync("powerups/consumed", JsonSerializer.Serialize(new { roomCode, userId, powerUpId = p.Id }));
+                var payload = JsonSerializer.Serialize(new { roomCode, userId, powerUpId = p.Id });
+                _ = _mqtt.PublishAsync("powerups/consumed", payload);
+                _ = _redis.SaveAsync("powerups", payload);
                 return true;
             }
         }

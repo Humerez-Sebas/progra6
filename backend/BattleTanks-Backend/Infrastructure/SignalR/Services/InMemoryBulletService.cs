@@ -9,7 +9,6 @@ public class InMemoryBulletService : IBulletService
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, BulletStateDto>> _byRoom = new();
     private readonly ConcurrentDictionary<(string roomCode, string shooterId), DateTime> _lastShot = new();
 
-    private const int MaxActivePerShooter = 2;
     private static readonly TimeSpan MinInterval = TimeSpan.FromMilliseconds(500);
 
     public bool TrySpawn(string roomCode, string roomId, string shooterId, float x, float y, float dir, float speed, out BulletStateDto state)
@@ -18,10 +17,8 @@ public class InMemoryBulletService : IBulletService
         var now = DateTime.UtcNow;
 
         var last = _lastShot.GetOrAdd((roomCode, shooterId), DateTime.MinValue);
-        if (now - last < MinInterval) return false;
-
         var activeCount = CountActiveByShooter(roomCode, shooterId);
-        if (activeCount >= MaxActivePerShooter) return false;
+        if (activeCount > 0 && now - last < MinInterval) return false;
 
         var bulletId = Guid.NewGuid().ToString();
         state = new BulletStateDto(

@@ -58,7 +58,8 @@ namespace Infrastructure.Migrations
                     LastLoginAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     GamesPlayed = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
                     GamesWon = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    TotalScore = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
+                    TotalScore = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    PlayersEliminated = table.Column<int>(type: "integer", nullable: false, defaultValue: 0)
                 },
                 constraints: table =>
                 {

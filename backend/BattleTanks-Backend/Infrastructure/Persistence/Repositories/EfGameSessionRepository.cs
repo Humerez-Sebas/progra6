@@ -81,7 +81,7 @@ public class EfGameSessionRepository : IGameSessionRepository
     {
         var query = _context.GameSessions
             .Include(gs => gs.Players).ThenInclude(p => p.User)
-            .Where(gs => gs.Status == GameRoomStatus.Waiting || gs.Status == GameRoomStatus.InProgress);
+            .Where(gs => gs.Status == GameRoomStatus.Waiting);
 
         if (onlyPublic)
             query = query.Where(gs => gs.IsPublic);

@@ -49,7 +49,6 @@ public class RoomsController : ControllerBase
                         p.Position.X,
                         p.Position.Y,
                         p.Rotation,
-                        p.Health,
                         p.IsAlive))
                   .ToList();
 

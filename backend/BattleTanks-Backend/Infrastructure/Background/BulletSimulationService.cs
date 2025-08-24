@@ -4,6 +4,7 @@ using Application.Interfaces;
 using Infrastructure.SignalR.Abstractions;
 using Infrastructure.SignalR.Hubs;
 using Infrastructure.Interfaces;
+using Domain.Enums;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -162,6 +163,7 @@ public class BulletSimulationService : BackgroundService, ILifeService
                     {
                         var winner = scores.OrderByDescending(k => k.Value).FirstOrDefault().Key ?? hitPlayerId;
                         InvokeGameService(game => game.EndGame(snap.RoomId));
+                        _ = _rooms.UpsertRoomAsync(snap.RoomId, snap.RoomCode, snap.Name, snap.MaxPlayers, snap.IsPublic, GameRoomStatus.Finished.ToString());
                         var final = scores.Select(kvp => new PlayerScoreDto(kvp.Key, kvp.Value)).ToList();
                         _ = _hub.Clients.Group(roomCode).SendAsync("gameEnded",
                             new GameEndedDto(winner, final));
