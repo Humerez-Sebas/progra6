@@ -1,0 +1,22 @@
+<div class="pixel-card p-4">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="pixel-title text-base">SALAS ACTIVAS</h2>
+    @if (loading()) { <span class="text-xs text-emerald-300">Actualizando...</span> }
+  </div>
+
+  @if (rooms().length === 0) {
+    <p class="text-emerald-200 text-xs">No hay salas activas aún.</p>
+  } @else {
+    <ul class="divide-y divide-emerald-800/40">
+      @for (room of rooms(); track room.roomId) {
+        <li class="py-3 flex items-center justify-between">
+          <div class="text-emerald-100 text-sm">
+            <div class="font-semibold">Código: <span class="text-emerald-300">{{ room.roomCode }}</span></div>
+            <div class="text-xs opacity-80">Estado: {{ room.status }} · Jugadores: {{ room.players.length }}</div>
+          </div>
+          <button class="pixel-btn px-3 py-2" (click)="enter(room.roomCode)">ENTRAR</button>
+        </li>
+      }
+    </ul>
+  }
+</div>

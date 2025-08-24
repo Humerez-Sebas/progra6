@@ -1,0 +1,96 @@
+﻿using System.Security.Claims;
+using Application.DTOs;
+using Application.Interfaces;  
+using Infrastructure.SignalR.Abstractions;
+using Microsoft.AspNetCore.SignalR;
+
+namespace Infrastructure.SignalR.Hubs;
+
+public partial class GameHub : Hub
+{
+    private readonly IConnectionTracker _tracker;
+    private readonly IRoomRegistry _rooms;
+    private readonly IMapService _map;
+    private readonly IBulletService _bulletService;
+
+    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMapService map, IBulletService bullets)
+    {
+        _tracker = tracker;
+        _rooms = rooms;
+        _map = map;
+        _bulletService = bullets;
+    }
+    
+    public async Task JoinRoom(string roomCode, string? username = null)
+    {
+        var userId = Context.User?.FindFirst("user_id")?.Value
+                     ?? Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? Guid.NewGuid().ToString();
+
+        var uname = Context.User?.FindFirst("username")?.Value
+                    ?? Context.User?.FindFirst(ClaimTypes.Name)?.Value
+                    ?? (string.IsNullOrWhiteSpace(username) ? $"Player-{userId[..8]}" : username.Trim());
+
+        try
+        {
+            await _rooms.JoinAsync(roomCode, userId, uname, Context.ConnectionId);
+        }
+        catch
+        {
+            throw new HubException("room_not_found");
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, roomCode);
+
+        var roomSnap = await _rooms.GetByCodeAsync(roomCode);
+        _tracker.Set(Context.ConnectionId, roomSnap!.RoomId, roomCode, userId, uname);
+        await Clients.Group(roomCode).SendAsync("playerJoined", new { userId, username = uname });
+
+        await Clients.Caller.SendAsync("roomSnapshot", new
+        {
+            roomId = roomSnap.RoomId,
+            roomCode = roomSnap.RoomCode,
+            players = roomSnap.Players.Values.ToArray()
+        });
+
+        var mapSnap = await _map.GetSnapshotAsync(roomSnap.RoomId);
+        await Clients.Caller.SendAsync("mapSnapshot", mapSnap);
+    }
+
+
+    public async Task LeaveRoom()
+    {
+        var left = await _rooms.LeaveByConnectionAsync(Context.ConnectionId);
+        if (!string.IsNullOrEmpty(left.roomCode) && !string.IsNullOrEmpty(left.userId))
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, left.roomCode!);
+            _tracker.Remove(Context.ConnectionId);
+            await Clients.Group(left.roomCode!).SendAsync("playerLeft", left.userId!);
+        }
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        try { await LeaveRoom(); } catch { }
+        await base.OnDisconnectedAsync(exception);
+    }
+
+    public async Task UpdatePosition(PlayerPositionDto position)
+    {
+        if (!_tracker.TryGet(Context.ConnectionId, out var info)) throw new HubException("not_in_room");
+
+        if (float.IsNaN(position.X) || float.IsInfinity(position.X) ||
+            float.IsNaN(position.Y) || float.IsInfinity(position.Y) ||
+            float.IsNaN(position.Rotation) || float.IsInfinity(position.Rotation)) return;
+
+        var fixedDto = new PlayerPositionDto(
+            info.UserId,
+            position.X,
+            position.Y,
+            position.Rotation,
+            position.Timestamp > 0 ? position.Timestamp : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+        );
+
+        await Clients.Group(info.RoomCode).SendAsync("playerMoved", fixedDto);
+    }
+}

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+print_message() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+if ! command -v docker-compose &> /dev/null; then
+    print_error "Docker Compose no está instalado."
+    exit 1
+fi
+
+print_message "Deteniendo servicios de infraestructura..."
+docker-compose down
+
+if [ "$1" = "--clean" ]; then
+    print_warning "Limpiando volúmenes (se perderán todos los datos)..."
+    docker-compose down -v
+    print_success "Volúmenes limpiados"
+fi
+
+print_success "Infraestructura detenida correctamente!"
+print_message "Para reiniciar los servicios, ejecuta: ./scripts/start.sh"

@@ -1,0 +1,24 @@
+<div class="pixel-card p-4">
+  <h2 class="pixel-title text-base mb-4">CREAR SALA</h2>
+
+  <form (ngSubmit)="submit()" [formGroup]="form" class="space-y-3">
+    <div>
+      <label class="pixel-label">Nombre</label>
+      <input class="pixel-input" type="text" formControlName="name" placeholder="Desierto 7" />
+    </div>
+
+    <div>
+      <label class="pixel-label">Max. jugadores</label>
+      <input class="pixel-input" type="number" formControlName="maxPlayers" min="2" max="32" />
+    </div>
+
+    <label class="flex items-center gap-2">
+      <input type="checkbox" formControlName="isPublic" class="h-4 w-4 text-emerald-500 rounded border-emerald-600">
+      <span class="text-xs text-emerald-200">Sala pública</span>
+    </label>
+
+    <button type="submit" [disabled]="creating()" class="pixel-btn w-full">
+      @if (creating()) { <span class="animate-pulse">CREANDO...</span> } @else { CREAR }
+    </button>
+  </form>
+</div>

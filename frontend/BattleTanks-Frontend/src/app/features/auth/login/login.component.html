@@ -1,0 +1,88 @@
+<div class="min-h-screen grid place-items-center grid-bg px-3">
+  <div class="w-full max-w-md pixel-card p-6 relative">
+    <h1 class="pixel-title text-center mb-6">BATTLE TANKS</h1>
+    <p class="text-center text-emerald-300 text-xs mb-6 tracking-wider">INGRESO PILOTO</p>
+
+    @if (error(); as err) {
+      <div class="mb-4 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+        {{ err }}
+      </div>
+    }
+
+    <form (ngSubmit)="submit()" [formGroup]="form" class="space-y-4">
+      <div>
+        <label class="pixel-label">Usuario o email</label>
+        <input
+          type="text"
+          formControlName="usernameOrEmail"
+          class="pixel-input"
+          placeholder="tank-ace o you@battle.tank" />
+        @if (f.usernameOrEmail.touched && f.usernameOrEmail.invalid) {
+          <p class="hint-error">Este campo es requerido.</p>
+        }
+      </div>
+
+      <div>
+        <label class="pixel-label">Contraseña</label>
+        <div class="relative">
+          <input
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            class="pixel-input pr-10"
+            placeholder="••••••••" />
+          <button
+            type="button"
+            (click)="toggleShowPassword()"
+            class="icon-btn"
+            aria-label="Mostrar/ocultar contraseña">
+            @if (showPassword()) {
+              <!-- Eye Slash -->
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                  d="M3.98 8.223A10.477 10.477 0 0 0 1.5 12c2.25 4.5 6.75 7.5 10.5 7.5 1.75 0 3.5-.5 5-1.5m2.02-2.223A10.45 10.45 0 0 0 21 12C18.75 7.5 14.25 4.5 10.5 4.5c-1.2 0-2.4.2-3.5.6" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                  d="M3 3l18 18M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+              </svg>
+            } @else {
+              <!-- Eye -->
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                  d="M2.036 12.322a1.012 1.012 0 0 1 0-.644C3.423 7.51 7.552 4.5 12 4.5c4.449 0 8.578 3.01 9.964 7.178.07.207.07.437 0 .644C20.578 16.49 16.449 19.5 12 19.5c-4.448 0-8.577-3.01-9.964-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+            }
+          </button>
+        </div>
+        @if (f.password.touched && f.password.invalid) {
+          <p class="hint-error">Mínimo 6 caracteres.</p>
+        }
+      </div>
+
+      <button type="submit" [disabled]="loading()" class="pixel-btn w-full">
+        @if (loading()) { <span class="animate-pulse">INGRESANDO...</span> } @else { INICIAR SESIÓN }
+      </button>
+
+      <p class="text-center text-xs text-emerald-300">
+        ¿No tienes cuenta?
+        <a class="text-emerald-200 underline hover:text-white" routerLink="/register">Regístrate</a>
+      </p>
+    </form>
+
+    <!-- Modal éxito -->
+    @if (showSuccessModal()) {
+      <div class="fixed inset-0 bg-black/50 grid place-items-center z-50">
+        <div class="pixel-card p-6 w-[90%] max-w-sm text-center">
+          <h2 class="pixel-title text-green-300">¡LOGIN OK!</h2>
+          <p class="text-emerald-200 text-xs mt-2">Tu sesión está activa.</p>
+          <button
+            type="button"
+            (click)="showSuccessModal.set(false)"
+            class="pixel-btn mt-4 w-full">CERRAR</button>
+        </div>
+      </div>
+    }
+
+    <div class="scanline"></div>
+  </div>
+</div>

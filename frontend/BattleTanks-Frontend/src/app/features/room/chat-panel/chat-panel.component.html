@@ -1,0 +1,26 @@
+<div class="pixel-card p-3 h-[520px] flex flex-col">
+  <h2 class="pixel-title text-base mb-2">COMUNICACIONES</h2>
+
+  <div class="flex-1 overflow-y-auto bg-[#0b2218] border border-emerald-900/60 rounded-md p-2 space-y-1">
+    @if (chat().length === 0) {
+      <div class="text-xs text-emerald-300/70">Sin mensajes.</div>
+    } @else {
+      @for (m of chat(); track m.messageId) {
+        <div class="text-xs">
+          <span class="text-emerald-400 font-semibold">{{ m.username }}:</span>
+          <span class="text-emerald-100">{{ m.content }}</span>
+        </div>
+      }
+    }
+  </div>
+
+  <div class="mt-2 flex gap-2">
+    <input
+      class="flex-1 pixel-input"
+      type="text"
+      [ngModel]="input()"
+      (ngModelChange)="input.set($event)"
+      placeholder="Escribe un mensaje..." />
+    <button class="pixel-btn px-3" (click)="send()">ENVIAR</button>
+  </div>
+</div>

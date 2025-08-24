@@ -1,0 +1,109 @@
+/* Fondo “radar grid” */
+.grid-bg {
+  background:
+    radial-gradient(ellipse at center, rgba(0, 255, 170, 0.06) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(rgba(12, 40, 28, 0.8), rgba(12, 40, 28, 0.8)),
+    repeating-linear-gradient(0deg, rgba(0,255,170,0.06) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, rgba(0,255,170,0.06) 0 1px, transparent 1px 40px);
+  background-color: #0b1e16;
+}
+
+/* Panel 8-bit */
+.pixel-card {
+  background: #0f2a1f;
+  border: 4px solid #1f4a38;
+  box-shadow:
+    inset 0 0 0 2px #0b2218,
+    0 0 0 2px #183c2e,
+    0 8px 0 0 #0b2218,
+    0 8px 20px rgba(0,0,0,0.5);
+  border-radius: 8px;
+  position: relative;
+  color: #d1fae5;
+}
+
+/* Título retro */
+.pixel-title {
+  font-family: "Press Start 2P", system-ui, monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #8ef3c5;
+  text-shadow: 0 0 8px rgba(0,255,170,0.4);
+}
+
+/* Labels e inputs */
+.pixel-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #a7f3d0;
+  margin-bottom: 6px;
+  font-family: "Press Start 2P", system-ui, monospace;
+}
+
+.pixel-input {
+  width: 100%;
+  background: #0b2218;
+  border: 2px solid #1f4a38;
+  color: #e6fffa;
+  padding: 10px 12px;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.pixel-input::placeholder { color: #74c9ad; opacity: .8; }
+.pixel-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 2px rgba(20,184,166,.25);
+}
+
+/* Botón principal 8-bit */
+.pixel-btn {
+  font-family: "Press Start 2P", system-ui, monospace;
+  background: linear-gradient(180deg, #34d399, #059669);
+  color: #052e23;
+  border: 3px solid #064e3b;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  letter-spacing: .08em;
+  transition: transform .05s ease, filter .15s ease;
+}
+.pixel-btn:hover { filter: brightness(1.05); }
+.pixel-btn:active { transform: translateY(2px); }
+.pixel-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Icono botón (ojito) */
+.icon-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ae6b4;
+  padding: 4px;
+  border-radius: 4px;
+}
+.icon-btn:hover { color: #e6fffa; }
+
+/* Error hint */
+.hint-error {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #fecaca;
+}
+
+/* Scanline sutil */
+.scanline {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.04) 0,
+    rgba(255,255,255,0.04) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  mix-blend-mode: overlay;
+  border-radius: 6px;
+}

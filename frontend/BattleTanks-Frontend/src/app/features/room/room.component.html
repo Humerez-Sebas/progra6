@@ -1,0 +1,30 @@
+<div class="min-h-screen grid place-items-center grid-bg px-3">
+  <div class="w-full max-w-6xl pixel-card p-4 relative">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
+      <a routerLink="/lobby" class="text-emerald-200 underline text-xs">Volver al lobby</a>
+    </div>
+
+    @if (error(); as err) {
+      <div class="mb-3 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+        {{ err }}
+        <a routerLink="/lobby" class="ml-2 underline">Volver</a>
+      </div>
+    }
+
+    @if (joined()) {
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+          <app-room-canvas />
+        </div>
+        <div>
+          <app-chat-panel />
+        </div>
+      </div>
+    } @else {
+      <div class="text-emerald-200 text-sm">Conectando a la sala...</div>
+    }
+
+    <div class="scanline"></div>
+  </div>
+</div>

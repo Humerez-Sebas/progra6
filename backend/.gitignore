@@ -1,0 +1,53 @@
+# === BUILD ===
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# === RUNTIME CONFIG / LOGS / TEMP ===
+*.log
+*.vspscc
+*.vssscc
+*.dbmdl
+*.cache
+*.pdb
+*.mdb
+
+# === Rider ===
+.idea/
+*.sln.iml
+
+# === VSCode ===
+.vscode/
+.history/
+
+# === DOTNET ENV FILES ===
+appsettings.*.json
+!appsettings.json
+
+# === OTHER DOTNET ===
+project.lock.json
+project.fragment.lock.json
+project.json
+*.nupkg
+*.snupkg
+*.nuspec
+
+# === DOTNET TOOLS ===
+*.dotCover
+*.dotTrace
+*.dotMemory
+*.ncrunch*
+*.coverage
+*.coveragexml
+
+# === MAC & WINDOWS JUNK ===
+.DS_Store
+Thumbs.db
+
+# === TEMP & BACKUPS ===
+*.bak
+*.tmp
+~$*

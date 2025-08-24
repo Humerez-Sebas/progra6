@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "BattleTanks Database",
+      "Group": "BattleTanks",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "battle_tanks",
+      "Username": "battleuser",
+      "Password": "battlepass",
+      "SSLMode": "prefer",
+      "Comment": "Base de datos principal del juego BattleTanks"
+    }
+  }
+}

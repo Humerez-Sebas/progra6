@@ -1,0 +1,12 @@
+<div class="pixel-card p-4">
+  <h2 class="pixel-title text-base mb-4">UNIRSE A SALA</h2>
+
+  <form (ngSubmit)="join()" [formGroup]="form" class="space-y-3">
+    <div>
+      <label class="pixel-label">Código de sala</label>
+      <input class="pixel-input" type="text" formControlName="roomCode" placeholder="ABCD" />
+    </div>
+
+    <button type="submit" class="pixel-btn w-full">ENTRAR</button>
+  </form>
+</div>
