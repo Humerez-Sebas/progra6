@@ -87,17 +87,12 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
     effect(() => {
       const ms = this.mapSize();
-      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0) {
-        const centerX = (ms.width * ms.tileSize) / 2;
-        const centerY = (ms.height * ms.tileSize) / 2;
-        this.setPlayerPositionClamped(centerX, centerY);
-        this.rot.set(0);
+      const meId = this.me()?.id;
+      const mePlayer = this.players().find(p => p.playerId === meId);
+      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0 && mePlayer) {
+        this.setPlayerPositionClamped(mePlayer.x, mePlayer.y);
+        this.rot.set(mePlayer.rotation || 0);
         this.spawnPlaced = true;
-
-        const meId = this.me()?.id ?? 'me';
-        this.store.dispatch(roomActions.updatePosition({
-          dto: { playerId: meId, x: this.px(), y: this.py(), rotation: this.rot(), timestamp: Date.now() }
-        }));
       }
     });
   }
