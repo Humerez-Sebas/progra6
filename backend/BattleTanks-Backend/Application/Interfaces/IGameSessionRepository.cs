@@ -14,5 +14,5 @@ public interface IGameSessionRepository
     Task UpdateAsync(GameSession session);
     Task DeleteAsync(Guid id);
 
-    Task<(List<GameSession> Items, int Total)> GetActiveSessionsPagedAsync(bool onlyPublic, int page, int pageSize);
+    Task<(List<GameSession> Items, int Total)> GetSessionsPagedAsync(bool onlyPublic, int page, int pageSize, GameRoomStatus? status = null);
 }
