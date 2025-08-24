@@ -43,7 +43,7 @@ public class InMemoryPowerUpService : IPowerUpService
         var room = _byRoom.GetOrAdd(roomCode, _ => new ConcurrentDictionary<string, PowerUpDto>());
         room[powerUp.Id] = powerUp;
 
-        _ = _mqtt.PublishAsync("powerups/spawned", JsonSerializer.Serialize(powerUp));
+        _mqtt.PublishAsync("powerups/spawned", JsonSerializer.Serialize(powerUp)).GetAwaiter().GetResult();
 
         return powerUp;
     }
@@ -67,7 +67,10 @@ public class InMemoryPowerUpService : IPowerUpService
             {
                 room.TryRemove(kvp.Key, out _);
                 powerUp = p;
-                _ = _mqtt.PublishAsync("powerups/consumed", JsonSerializer.Serialize(new { roomCode, userId, powerUpId = p.Id }));
+                _mqtt.PublishAsync(
+                    "powerups/consumed",
+                    JsonSerializer.Serialize(new { roomCode, userId, powerUpId = p.Id })
+                ).GetAwaiter().GetResult();
                 return true;
             }
         }

@@ -38,8 +38,6 @@ interface CosmeticBullet {
 })
 export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   private store = inject(Store);
-
-  @ViewChild('wrap', { static: true }) wrapRef!: ElementRef<HTMLDivElement>;
   @ViewChild('gameCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
 
   players      = toSignal(this.store.select(selectPlayers), { initialValue: [] });
@@ -90,6 +88,9 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       const ms = this.mapSize();
       const meId = this.me()?.id;
       const mePlayer = this.players().find(p => p.playerId === meId);
+      if (ms.width > 0 && ms.height > 0) {
+        this.resizeCanvas();
+      }
       if (!this.spawnPlaced && ms.width > 0 && ms.height > 0 && mePlayer) {
         this.setPlayerPositionClamped(mePlayer.x, mePlayer.y);
         this.rot.set(mePlayer.rotation || 0);
@@ -101,7 +102,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     const canvas = this.canvasRef.nativeElement;
     this.ctx = canvas.getContext('2d');
-    this.resizeCanvas(true);
+    this.resizeCanvas();
     this.running = true;
     requestAnimationFrame(this.loop);
   }
@@ -110,17 +111,13 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('window:resize') onWindowResize() { this.resizeCanvas(); }
 
-  private resizeCanvas(initial = false) {
-    const wrap = this.wrapRef.nativeElement;
+  private resizeCanvas() {
     const canvas = this.canvasRef.nativeElement;
-    let w = wrap.clientWidth || wrap.getBoundingClientRect().width || 800;
-    w = Math.max(320, Math.floor(w));
-    const h = Math.min(520, Math.round(w * 0.6));
-    canvas.width = w; canvas.height = h;
-    if (initial && !this.spawnPlaced) {
-      this.px.set(Math.floor(w / 2));
-      this.py.set(Math.floor(h / 2));
-    }
+    const ms = this.mapSize();
+    const w = ms.width * ms.tileSize || 800;
+    const h = ms.height * ms.tileSize || 600;
+    canvas.width = w;
+    canvas.height = h;
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -182,6 +179,11 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
 
   private loop = (ts: number) => {
     if (!this.running || !this.ctx) return;
+    if (!this.spawnPlaced) {
+      requestAnimationFrame(this.loop);
+      return;
+    }
+
     const dt = (ts - (this.lastTs || ts)) / 1000;
     this.lastTs = ts;
 
