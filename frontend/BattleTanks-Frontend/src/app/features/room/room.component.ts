@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { roomActions } from './store/room.actions';
-import { selectHubConnected, selectJoined, selectRoomError, selectRoomId } from './store/room.selectors';
+import { selectHubConnected, selectJoined, selectRoomError, selectRoomId, selectPlayers } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
@@ -29,6 +29,7 @@ export class RoomComponent implements OnInit, OnDestroy {
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal(this.store.select(selectUser),         { initialValue: null });
   roomId       = toSignal(this.store.select(selectRoomId),       { initialValue: null });
+  players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] });
 
   private roomCode = signal<string | null>(null);
 

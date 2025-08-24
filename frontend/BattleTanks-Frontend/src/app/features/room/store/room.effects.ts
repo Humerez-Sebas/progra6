@@ -39,7 +39,7 @@ export class RoomEffects {
           this.hub.chatMessage$.pipe(map((msg) => roomActions.messageReceived({ msg }))),
           this.hub.playerMoved$.pipe(map((player: any) => roomActions.playerMoved({ player }))),
           this.hub.bulletSpawned$.pipe(map((bullet) => roomActions.bulletSpawned({ bullet }))),
-          this.hub.bulletDespawned$.pipe(map(({ bulletId }) => roomActions.bulletDespawned({ bulletId }))),
+          this.hub.bulletDespawned$.pipe(map(({ bulletId, reason }) => roomActions.bulletDespawned({ bulletId, reason }))),
 
           this.hub.roomSnapshot$.pipe(map((snapshot) => roomActions.roomSnapshotReceived({ snapshot }))),
           this.hub.mapSnapshot$.pipe(map((snapshot) => roomActions.mapSnapshotReceived({ snapshot }))),
@@ -48,6 +48,9 @@ export class RoomEffects {
           this.hub.playerRespawned$.pipe(map((data) => roomActions.playerRespawned({ data }))),
           this.hub.playerScored$.pipe(map((data) => roomActions.playerScored({ data }))),
           this.hub.gameEnded$.pipe(map((data) => roomActions.gameEnded({ data }))),
+          this.hub.powerUpsSnapshot$.pipe(map((powerUps) => roomActions.powerUpsSnapshotReceived({ powerUps }))),
+          this.hub.powerUpSpawned$.pipe(map((powerUp) => roomActions.powerUpSpawned({ powerUp }))),
+          this.hub.powerUpCollected$.pipe(map((payload) => roomActions.powerUpCollected(payload))),
         ).pipe(takeUntil(stop$));
       })
     )
@@ -136,5 +139,14 @@ export class RoomEffects {
         )
       )
     )
+  );
+
+  logBulletCollisions$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(roomActions.bulletDespawned),
+        tap(({ bulletId, reason }) => console.log('Bullet', bulletId, 'despawned because', reason))
+      ),
+    { dispatch: false }
   );
 }

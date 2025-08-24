@@ -21,6 +21,15 @@
           <app-room-canvas />
         </div>
         <div>
+          <div class="mb-4 bg-emerald-800/30 p-2 rounded text-emerald-100">
+            <h2 class="text-xs font-bold mb-2">Jugadores</h2>
+            @for (p of players(); track p.playerId) {
+              <div class="text-xs flex justify-between">
+                <span>{{ p.username }}</span>
+                <span>❤️ {{ p.lives ?? 3 }} · ⭐ {{ p.score ?? 0 }}</span>
+              </div>
+            }
+          </div>
           <app-chat-panel />
         </div>
       </div>

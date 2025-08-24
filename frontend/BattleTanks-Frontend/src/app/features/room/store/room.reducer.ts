@@ -7,10 +7,12 @@ import {
   PlayerStateDto,
   MapTileDto,
   MapTileType,
+  PowerUpDto,
 } from '../../../core/models/game.models';
 
 export interface PlayerEntity extends PlayerStateDto {}
 export interface BulletEntity extends BulletStateDto {}
+export interface PowerUpEntity extends PowerUpDto {}
 
 export interface RoomState {
   roomId: string | null;
@@ -20,6 +22,7 @@ export interface RoomState {
   error: string | null;
   players: EntityState<PlayerEntity>;
   bullets: EntityState<BulletEntity>;
+  powerUps: EntityState<PowerUpEntity>;
   chat: ChatMessageDto[];
   lastUsername: string | null;
 
@@ -33,6 +36,7 @@ export interface RoomState {
 
 const playersAdapter = createEntityAdapter<PlayerEntity>({ selectId: (p) => p.playerId });
 const bulletsAdapter = createEntityAdapter<BulletEntity>({ selectId: (b) => b.bulletId });
+const powerUpsAdapter = createEntityAdapter<PowerUpEntity>({ selectId: (p) => p.id });
 
 const initialState: RoomState = {
   roomId: null,
@@ -42,6 +46,7 @@ const initialState: RoomState = {
   error: null,
   players: playersAdapter.getInitialState(),
   bullets: bulletsAdapter.getInitialState(),
+  powerUps: powerUpsAdapter.getInitialState(),
   chat: [],
   lastUsername: null,
   map: null,
@@ -66,6 +71,7 @@ export const roomReducer = createReducer(
     roomCode: null,
     players: playersAdapter.removeAll(s.players),
     bullets: bulletsAdapter.removeAll(s.bullets),
+    powerUps: powerUpsAdapter.removeAll(s.powerUps),
     chat: [],
     map: null,
   })),
@@ -73,7 +79,10 @@ export const roomReducer = createReducer(
   // Snapshots
   on(roomActions.roomSnapshotReceived, (s, { snapshot }) => ({
     ...s,
-    players: playersAdapter.setAll(snapshot.players ?? [], s.players),
+    players: playersAdapter.setAll(
+      (snapshot.players ?? []).map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
+      s.players
+    ),
   })),
 
   on(roomActions.mapSnapshotReceived, (s, { snapshot }) => {
@@ -109,6 +118,8 @@ export const roomReducer = createReducer(
       rotation: existing?.rotation ?? 0,
       health: existing?.health ?? 100,
       isAlive: existing?.isAlive ?? true,
+      lives: existing?.lives ?? 3,
+      score: existing?.score ?? 0,
     };
     return { ...s, players: playersAdapter.upsertOne(upsert, s.players) };
   }),
@@ -129,6 +140,8 @@ export const roomReducer = createReducer(
       rotation: (player as any).rotation,
       health: (player as any).health ?? existing?.health ?? 100,
       isAlive: (player as any).isAlive ?? existing?.isAlive ?? true,
+      lives: (player as any).lives ?? existing?.lives ?? 3,
+      score: (player as any).score ?? existing?.score ?? 0,
     };
     return { ...s, players: playersAdapter.upsertOne(merged, s.players) };
   }),
@@ -166,6 +179,20 @@ export const roomReducer = createReducer(
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
   }),
 
+  // PowerUps
+  on(roomActions.powerUpsSnapshotReceived, (s, { powerUps }) => ({
+    ...s,
+    powerUps: powerUpsAdapter.setAll(powerUps, s.powerUps),
+  })),
+  on(roomActions.powerUpSpawned, (s, { powerUp }) => ({
+    ...s,
+    powerUps: powerUpsAdapter.upsertOne(powerUp, s.powerUps),
+  })),
+  on(roomActions.powerUpCollected, (s, { powerUpId }) => ({
+    ...s,
+    powerUps: powerUpsAdapter.removeOne(powerUpId, s.powerUps),
+  })),
+
   // Balas
   on(roomActions.bulletSpawned, (s, { bullet }) => ({
     ...s,
@@ -180,7 +207,10 @@ export const roomReducer = createReducer(
   on(roomActions.rosterLoaded, (s, { players, roomId }) => ({
     ...s,
     roomId: roomId ?? s.roomId,
-    players: playersAdapter.upsertMany(players, s.players),
+    players: playersAdapter.upsertMany(
+      players.map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
+      s.players
+    ),
   })),
 
   on(roomActions.messageReceived, (s, { msg }) => ({
@@ -204,3 +234,4 @@ export const roomReducer = createReducer(
 
 export const roomPlayersAdapter = playersAdapter;
 export const roomBulletsAdapter = bulletsAdapter;
+export const roomPowerUpsAdapter = powerUpsAdapter;

@@ -85,3 +85,13 @@ export interface RoomSnapshotDto {
   roomCode: string;
   players: PlayerStateDto[];
 }
+
+export type PowerUpType = 'ExtraLife';
+
+export interface PowerUpDto {
+  id: string;
+  roomId: string;
+  type: PowerUpType;
+  x: number;
+  y: number;
+}

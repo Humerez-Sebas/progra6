@@ -1,7 +1,8 @@
 ﻿using System.Security.Claims;
 using Application.DTOs;
-using Application.Interfaces;  
+using Application.Interfaces;
 using Infrastructure.SignalR.Abstractions;
+using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Infrastructure.SignalR.Hubs;
@@ -13,14 +14,16 @@ public partial class GameHub : Hub
     private readonly IMapService _map;
     private readonly IBulletService _bulletService;
     private readonly IPowerUpService _powerUps;
+    private readonly ILifeService _lifeService;
 
-    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMapService map, IBulletService bullets, IPowerUpService powerUps)
+    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMapService map, IBulletService bullets, IPowerUpService powerUps, ILifeService lifeService)
     {
         _tracker = tracker;
         _rooms = rooms;
         _map = map;
         _bulletService = bullets;
         _powerUps = powerUps;
+        _lifeService = lifeService;
     }
     
     public async Task JoinRoom(string roomCode, string? username = null)
@@ -108,12 +111,11 @@ public partial class GameHub : Hub
 
         if (_powerUps.TryConsume(info.RoomCode, info.UserId, position.X, position.Y, out var pu))
         {
-            var newState = await _rooms.AddHealthAsync(info.RoomCode, info.UserId, 20);
+            var newLives = _lifeService.AddLife(info.RoomId, info.UserId, 1);
             await Clients.Group(info.RoomCode).SendAsync("powerUpCollected", new { powerUpId = pu!.Id, userId = info.UserId });
-            if (newState != null)
-            {
-                await Clients.Group(info.RoomCode).SendAsync("playerHealthUpdated", new { userId = info.UserId, health = newState.Health });
-            }
+            await Clients.Group(info.RoomCode).SendAsync("playerLifeLost", new PlayerLifeLostDto(info.UserId, newLives, false));
+            var spawned = _powerUps.SpawnRandom(info.RoomCode, info.RoomId);
+            await Clients.Group(info.RoomCode).SendAsync("powerUpSpawned", spawned);
         }
     }
 }

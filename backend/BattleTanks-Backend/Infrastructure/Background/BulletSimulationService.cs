@@ -3,13 +3,14 @@ using Application.DTOs;
 using Application.Interfaces;
 using Infrastructure.SignalR.Abstractions;
 using Infrastructure.SignalR.Hubs;
+using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Background;
 
-public class BulletSimulationService : BackgroundService
+public class BulletSimulationService : BackgroundService, ILifeService
 {
     private readonly ILogger<BulletSimulationService> _log;
     private readonly IBulletService _bullets;
@@ -196,6 +197,21 @@ public class BulletSimulationService : BackgroundService
                 return p.PlayerId;
         }
         return null;
+    }
+
+    public int AddLife(string roomId, string playerId, int amount = 1)
+    {
+        var lives = GetLivesDict(roomId);
+        var current = lives.TryGetValue(playerId, out var prev) ? prev : 3;
+        current += amount;
+        lives[playerId] = current;
+        return current;
+    }
+
+    public int GetLives(string roomId, string playerId)
+    {
+        var lives = GetLivesDict(roomId);
+        return lives.TryGetValue(playerId, out var l) ? l : 3;
     }
 
     private Dictionary<string, int> GetLivesDict(string roomId)

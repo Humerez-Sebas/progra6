@@ -18,6 +18,9 @@ class SignalRServiceMock {
   playerMoved$ = new Subject<any>();
   bulletSpawned$ = new Subject<any>();
   bulletDespawned$ = new Subject<{ bulletId: string; reason: string }>();
+  powerUpsSnapshot$ = new Subject<any>();
+  powerUpSpawned$ = new Subject<any>();
+  powerUpCollected$ = new Subject<any>();
   reconnected$ = new Subject<void>();
   disconnected$ = new Subject<void>();
 
