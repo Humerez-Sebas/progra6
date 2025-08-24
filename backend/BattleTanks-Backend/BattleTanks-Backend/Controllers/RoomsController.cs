@@ -26,15 +26,12 @@ public class RoomsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetActiveRooms(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] bool onlyPublic = true)
+    public async Task<IActionResult> GetActiveRooms([FromQuery] RoomsQuery query)
     {
-        if (page < 1 || pageSize < 1 || pageSize > 100)
+        if (query.Page < 1 || query.PageSize < 1 || query.PageSize > 100)
             return BadRequest(new { success = false, message = "Invalid pagination parameters" });
 
-        var (items, total) = await _gameSessionRepository.GetActiveSessionsPagedAsync(onlyPublic, page, pageSize);
+        var (items, total) = await _gameSessionRepository.GetSessionsPagedAsync(query.OnlyPublic, query.Page, query.PageSize, query.Status);
 
         // Enriquecer cada room con los jugadores actuales desde RoomRegistry
         var roomsTasks = items.Select(async s =>
@@ -65,8 +62,8 @@ public class RoomsController : ControllerBase
         return Ok(new
         {
             success = true,
-            page,
-            pageSize,
+            page = query.Page,
+            pageSize = query.PageSize,
             total,
             items = rooms
         });

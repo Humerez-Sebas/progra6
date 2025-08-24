@@ -101,10 +101,10 @@ public class InMemoryMapService : IMapService
         var ts = TileSize;
         return new (float, float)[]
         {
-            (ts * 2f, ts * 2f),
-            (ts * (w - 3), ts * 2f),
-            (ts * 2f, ts * (h - 3)),
-            (ts * (w - 3), ts * (h - 3))
+            (ts * 1.5f, ts * 1.5f),
+            (ts * (w - 1.5f), ts * 1.5f),
+            (ts * 1.5f, ts * (h - 1.5f)),
+            (ts * (w - 1.5f), ts * (h - 1.5f))
         };
     }
 

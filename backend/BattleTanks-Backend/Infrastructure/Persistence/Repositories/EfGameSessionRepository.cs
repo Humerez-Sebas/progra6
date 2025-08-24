@@ -77,11 +77,14 @@ public class EfGameSessionRepository : IGameSessionRepository
         }
     }
 
-    public async Task<(List<GameSession> Items, int Total)> GetActiveSessionsPagedAsync(bool onlyPublic, int page, int pageSize)
+    public async Task<(List<GameSession> Items, int Total)> GetSessionsPagedAsync(bool onlyPublic, int page, int pageSize, GameRoomStatus? status = null)
     {
         var query = _context.GameSessions
             .Include(gs => gs.Players).ThenInclude(p => p.User)
-            .Where(gs => gs.Status == GameRoomStatus.Waiting);
+            .AsQueryable();
+
+        if (status.HasValue)
+            query = query.Where(gs => gs.Status == status.Value);
 
         if (onlyPublic)
             query = query.Where(gs => gs.IsPublic);
