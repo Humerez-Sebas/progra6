@@ -44,7 +44,7 @@ public class InMemoryPowerUpService : IPowerUpService
         room[powerUp.Id] = powerUp;
 
         _ = _mqtt.PublishAsync("powerups/spawned", JsonSerializer.Serialize(powerUp));
-
+        Console.WriteLine("---------------------------------------------------------------------- se mando por mqtt el spawn de un powerup");
         return powerUp;
     }
 
