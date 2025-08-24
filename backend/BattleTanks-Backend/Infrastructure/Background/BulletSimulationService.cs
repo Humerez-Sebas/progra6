@@ -5,6 +5,7 @@ using Infrastructure.SignalR.Abstractions;
 using Infrastructure.SignalR.Hubs;
 using Infrastructure.Interfaces;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -17,7 +18,7 @@ public class BulletSimulationService : BackgroundService, ILifeService
     private readonly IMapService _map;
     private readonly IRoomRegistry _rooms;
     private readonly IHubContext<GameHub> _hub;
-    private readonly IGameService _game;
+    private readonly IServiceScopeFactory _scopeFactory;
 
 
     private readonly Dictionary<string, Dictionary<string, int>> _lives = new();
@@ -33,14 +34,14 @@ public class BulletSimulationService : BackgroundService, ILifeService
         IMapService map,
         IRoomRegistry rooms,
         IHubContext<GameHub> hub,
-        IGameService game)
+        IServiceScopeFactory scopeFactory)
     {
         _log = log;
         _bullets = bullets;
         _map = map;
         _rooms = rooms;
         _hub = hub;
-        _game = game;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -115,7 +116,7 @@ public class BulletSimulationService : BackgroundService, ILifeService
                     scores[b.ShooterId] = sc;
                     _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
                         new PlayerScoredDto(b.ShooterId, sc));
-                    _ = _game.AwardWallPoints(snap.RoomId, b.ShooterId, 50);
+                    InvokeGameService(game => game.AwardWallPoints(snap.RoomId, b.ShooterId, 50));
                 }
 
                 _bullets.Despawn(roomCode, bulletId);
@@ -142,7 +143,7 @@ public class BulletSimulationService : BackgroundService, ILifeService
                     scores[b.ShooterId] = sc;
                     _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
                         new PlayerScoredDto(b.ShooterId, sc));
-                    _ = _game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150);
+                    InvokeGameService(game => game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150));
                 }
 
                 _bullets.Despawn(roomCode, bulletId);
@@ -163,7 +164,7 @@ public class BulletSimulationService : BackgroundService, ILifeService
                     if (remaining <= 1)
                     {
                         var winner = scores.OrderByDescending(k => k.Value).FirstOrDefault().Key ?? hitPlayerId;
-                        _ = _game.EndGame(snap.RoomId);
+                        InvokeGameService(game => game.EndGame(snap.RoomId));
                         var final = scores.Select(kvp => new PlayerScoreDto(kvp.Key, kvp.Value)).ToList();
                         _ = _hub.Clients.Group(roomCode).SendAsync("gameEnded",
                             new GameEndedDto(winner, final));
@@ -174,6 +175,16 @@ public class BulletSimulationService : BackgroundService, ILifeService
 
             _bullets.UpdateBullet(roomCode, bulletId, b with { X = nx, Y = ny });
         }
+    }
+
+    private void InvokeGameService(Func<IGameService, Task> action)
+    {
+        _ = Task.Run(async () =>
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var game = scope.ServiceProvider.GetRequiredService<IGameService>();
+            await action(game);
+        });
     }
 
     private static string? FindHitPlayer(
