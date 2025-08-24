@@ -33,7 +33,5 @@ public record PlayerHitDto(
     string BulletId,
     string TargetPlayerId,
     string ShooterId,
-    int Damage,
-    int TargetHealthAfter,
     bool TargetIsAlive
 );

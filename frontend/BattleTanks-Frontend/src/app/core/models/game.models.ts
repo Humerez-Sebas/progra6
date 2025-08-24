@@ -4,7 +4,6 @@ export interface PlayerStateDto {
   x: number;
   y: number;
   rotation: number;
-  health: number;
   isAlive: boolean;
   lives?: number;
   score?: number;

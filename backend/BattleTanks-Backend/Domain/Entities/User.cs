@@ -13,6 +13,7 @@ public class User
     public int GamesPlayed { get; private set; }
     public int GamesWon { get; private set; }
     public int TotalScore { get; private set; }
+    public int PlayersEliminated { get; private set; }
     
     // Relación con Score
     private readonly List<Score> _scores = new();
@@ -32,7 +33,8 @@ public class User
             LastLoginAt = DateTime.UtcNow,
             GamesPlayed = 0,
             GamesWon = 0,
-            TotalScore = 0
+            TotalScore = 0,
+            PlayersEliminated = 0
         };
     }
     
@@ -41,7 +43,7 @@ public class User
         LastLoginAt = DateTime.UtcNow;
     }
     
-    public void AddGameResult(bool won, int score)
+    public void AddGameResult(bool won, int score, int kills)
     {
         GamesPlayed++;
         if (won)
@@ -49,6 +51,7 @@ public class User
             GamesWon++;
         }
         TotalScore += score;
+        PlayersEliminated += kills;
     }
     
     public void ChangePassword(string newPasswordHash)

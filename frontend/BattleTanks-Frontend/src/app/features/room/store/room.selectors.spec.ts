@@ -7,8 +7,8 @@ describe('Room Selectors', () => {
 
   beforeEach(() => {
     const players = roomPlayersAdapter.setAll([
-      { playerId: 'p1', username: 'juan', x: 1, y: 2, rotation: 0, health: 100, isAlive: true },
-      { playerId: 'p2', username: 'sebas', x: 4, y: 5, rotation: 0, health: 100, isAlive: true },
+      { playerId: 'p1', username: 'juan', x: 1, y: 2, rotation: 0, isAlive: true },
+      { playerId: 'p2', username: 'sebas', x: 4, y: 5, rotation: 0, isAlive: true },
     ], roomPlayersAdapter.getInitialState());
 
     const bullets = roomBulletsAdapter.setAll([

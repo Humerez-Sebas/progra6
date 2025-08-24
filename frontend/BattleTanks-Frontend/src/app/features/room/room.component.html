@@ -42,7 +42,7 @@
     @if (gameOver()) {
       <div class="absolute inset-0 flex items-center justify-center bg-black/80">
         <div class="p-4 text-center rounded bg-emerald-800 text-emerald-100">
-          <h2 class="mb-2 text-lg font-bold">Juego Terminado</h2>
+          <h2 class="mb-2 text-lg font-bold">{{ victory() ? '¡Ganaste!' : 'Juego Terminado' }}</h2>
           <p>Puntaje: {{ stats()?.score ?? 0 }}</p>
           <a routerLink="/lobby" class="inline-block px-3 py-1 mt-3 text-white rounded bg-emerald-600">Volver al lobby</a>
         </div>

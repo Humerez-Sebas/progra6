@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMapService, InMemoryMapService>();
         services.AddSingleton<IBulletService, InMemoryBulletService>();
         services.AddSingleton<IMqttService, MqttService>();
+        services.AddSingleton<IRedisService, RedisService>();
         services.AddSingleton<IPowerUpService, InMemoryPowerUpService>();
         services.AddSingleton<BulletSimulationService>();
         services.AddSingleton<ILifeService>(sp => sp.GetRequiredService<BulletSimulationService>());

@@ -116,7 +116,7 @@ export class RoomCanvasComponent implements AfterViewInit, OnDestroy {
       const meId = this.me()?.id;
       const mePlayer = this.players().find(p => p.playerId === meId);
 
-      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0 && mePlayer) {
+      if (!this.spawnPlaced && ms.width > 0 && ms.height > 0 && mePlayer && (mePlayer.x !== 0 || mePlayer.y !== 0)) {
         this.setPlayerPositionClamped(mePlayer.x, mePlayer.y);
         this.rot.set(mePlayer.rotation || 0);
         this.spawnPlaced = true;

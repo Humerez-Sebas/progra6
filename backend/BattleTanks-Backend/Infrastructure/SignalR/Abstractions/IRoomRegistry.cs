@@ -21,5 +21,4 @@ public interface IRoomRegistry
     Task<(string? roomCode, string? userId)> LeaveByConnectionAsync(string connectionId);
     Task<IReadOnlyCollection<PlayerStateDto>> GetPlayersByIdAsync(string roomId);
     Task UpdatePlayerPositionAsync(string roomCode, string userId, float x, float y, float rotation);
-    Task<PlayerStateDto?> AddHealthAsync(string roomCode, string userId, int amount);
 }

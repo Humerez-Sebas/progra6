@@ -63,7 +63,7 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         var spawns = _map.GetSpawnPoints(room.RoomId);
         var spawn = spawns[room.NextSpawn % spawns.Length];
         room.NextSpawn++;
-        var state = new PlayerStateDto(userId, username, spawn.x, spawn.y, 0, 100, true);
+        var state = new PlayerStateDto(userId, username, spawn.x, spawn.y, 0, true);
         room.Players[userId] = state;
         _connIndex[connectionId] = (roomCode, userId);
     }
@@ -98,18 +98,6 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         return Task.CompletedTask;
     }
 
-    public Task<PlayerStateDto?> AddHealthAsync(string roomCode, string userId, int amount)
-    {
-        if (_codeToId.TryGetValue(roomCode, out var roomId) &&
-            _byId.TryGetValue(roomId, out var room) &&
-            room.Players.TryGetValue(userId, out var state))
-        {
-            var newState = state with { Health = state.Health + amount };
-            room.Players[userId] = newState;
-            return Task.FromResult<PlayerStateDto?>(newState);
-        }
-        return Task.FromResult<PlayerStateDto?>(null);
-    }
 
     private async Task<Room> EnsureRoomByCodeAsync(string roomCode)
     {

@@ -60,12 +60,9 @@ export class RoomEffects {
       ofType(roomActions.joinRoom),
       switchMap(({ code, username }) =>
         this.roomsHttp.joinRoom({ roomCode: code, userName: username }).pipe(
-          switchMap((room) =>
+          switchMap(() =>
             from(this.hub.joinRoom(code, username)).pipe(
-              mergeMap(() => [
-                roomActions.joined(),
-                roomActions.rosterLoaded({ players: room.players ?? [], roomId: room.roomId })
-              ]),
+              map(() => roomActions.joined()),
               catchError((err) => of(roomActions.hubError({ error: err?.message ?? 'join_failed' })))
             )
           ),
@@ -127,8 +124,6 @@ export class RoomEffects {
       ),
     { dispatch: false }
   );
-
-  // Previous rosterAfterJoin$ effect removed; HTTP join already provides roster information
 
   logBulletCollisions$ = createEffect(
     () =>

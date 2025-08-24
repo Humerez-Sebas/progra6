@@ -25,6 +25,7 @@ export interface RoomState {
   powerUps: EntityState<PowerUpEntity>;
   chat: ChatMessageDto[];
   lastUsername: string | null;
+  gameResult: { winnerPlayerId: string; scores: { playerId: string; score: number }[] } | null;
 
   map: {
     width: number;
@@ -49,6 +50,7 @@ const initialState: RoomState = {
   powerUps: powerUpsAdapter.getInitialState(),
   chat: [],
   lastUsername: null,
+  gameResult: null,
   map: null,
 };
 
@@ -79,6 +81,8 @@ export const roomReducer = createReducer(
   // Snapshots
   on(roomActions.roomSnapshotReceived, (s, { snapshot }) => ({
     ...s,
+    roomId: snapshot.roomId ?? s.roomId,
+    roomCode: snapshot.roomCode ?? s.roomCode,
     players: playersAdapter.setAll(
       (snapshot.players ?? []).map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
       s.players
@@ -116,7 +120,6 @@ export const roomReducer = createReducer(
       x: existing?.x ?? 0,
       y: existing?.y ?? 0,
       rotation: existing?.rotation ?? 0,
-      health: existing?.health ?? 100,
       isAlive: existing?.isAlive ?? true,
       lives: existing?.lives ?? 3,
       score: existing?.score ?? 0,
@@ -138,7 +141,6 @@ export const roomReducer = createReducer(
       x: (player as any).x,
       y: (player as any).y,
       rotation: (player as any).rotation,
-      health: (player as any).health ?? existing?.health ?? 100,
       isAlive: (player as any).isAlive ?? existing?.isAlive ?? true,
       lives: (player as any).lives ?? existing?.lives ?? 3,
       score: (player as any).score ?? existing?.score ?? 0,
@@ -152,7 +154,6 @@ export const roomReducer = createReducer(
     if (!p) return s;
     const updated: PlayerStateDto = {
       ...p,
-      // health visual si quieres (no sabemos max HP exacto; usamos bool eliminated)
       isAlive: !data.eliminated,
       lives: data.livesAfter,
     };
@@ -162,7 +163,7 @@ export const roomReducer = createReducer(
   on(roomActions.playerRespawned, (s, { data }) => {
     const p = s.players.entities[data.playerId];
     const updated: PlayerStateDto = {
-      ...(p ?? { playerId: data.playerId, username: 'Player', rotation: 0, health: 100, isAlive: true, x: 0, y: 0 }),
+      ...(p ?? { playerId: data.playerId, username: 'Player', rotation: 0, isAlive: true, x: 0, y: 0 }),
       x: data.x,
       y: data.y,
       isAlive: true,
@@ -173,7 +174,7 @@ export const roomReducer = createReducer(
   on(roomActions.playerScored, (s, { data }) => {
     const p = s.players.entities[data.playerId];
     const updated: PlayerStateDto = {
-      ...(p ?? { playerId: data.playerId, username: 'Player', rotation: 0, health: 100, isAlive: true, x: 0, y: 0 }),
+      ...(p ?? { playerId: data.playerId, username: 'Player', rotation: 0, isAlive: true, x: 0, y: 0 }),
       score: data.score,
     };
     return { ...s, players: playersAdapter.upsertOne(updated, s.players) };
@@ -203,16 +204,6 @@ export const roomReducer = createReducer(
     bullets: bulletsAdapter.removeOne(bulletId, s.bullets),
   })),
 
-  // Roster HTTP
-  on(roomActions.rosterLoaded, (s, { players, roomId }) => ({
-    ...s,
-    roomId: roomId ?? s.roomId,
-    players: playersAdapter.upsertMany(
-      players.map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
-      s.players
-    ),
-  })),
-
   on(roomActions.messageReceived, (s, { msg }) => ({
     ...s,
     chat: [...s.chat, msg].slice(-200),
@@ -223,12 +214,12 @@ export const roomReducer = createReducer(
     for (const sc of data.scores) {
       const ex = players.entities[sc.playerId];
       const up: PlayerStateDto = {
-        ...(ex ?? { playerId: sc.playerId, username: 'Player', rotation: 0, health: 100, isAlive: true, x: 0, y: 0 }),
+        ...(ex ?? { playerId: sc.playerId, username: 'Player', rotation: 0, isAlive: true, x: 0, y: 0 }),
         score: sc.score,
       };
       players = playersAdapter.upsertOne(up, players);
     }
-    return { ...s, players };
+    return { ...s, players, gameResult: { winnerPlayerId: data.winnerPlayerId, scores: data.scores } };
   }),
 );
 
