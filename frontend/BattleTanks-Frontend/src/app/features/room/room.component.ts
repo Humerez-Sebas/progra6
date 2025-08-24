@@ -1,15 +1,31 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { roomActions } from './store/room.actions';
-import { selectHubConnected, selectJoined, selectRoomError, selectRoomId, selectPlayers } from './store/room.selectors';
+import {
+  selectHubConnected,
+  selectJoined,
+  selectRoomError,
+  selectRoomId,
+  selectPlayers,
+} from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
 import { RoomService } from '../../core/services/room.service';
+import { UserDto } from '../../core/models/auth.models';
 
 @Component({
   standalone: true,
@@ -27,21 +43,50 @@ export class RoomComponent implements OnInit, OnDestroy {
   hubConnected = toSignal(this.store.select(selectHubConnected), { initialValue: false });
   joined       = toSignal(this.store.select(selectJoined),       { initialValue: false });
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
-  user         = toSignal(this.store.select(selectUser),         { initialValue: null });
+  user         = toSignal<UserDto | null>(this.store.select(selectUser), { initialValue: null });
   roomId       = toSignal(this.store.select(selectRoomId),       { initialValue: null });
-  players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] });
+  players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] as any[] });
 
   private roomCode = signal<string | null>(null);
+  gameOver = signal(false);
+  stats = signal<{ score: number } | null>(null);
 
-  // 👇 Efecto creado como *campo de clase* (válido en contexto de inyección)
+  /** Identifica MI jugador por playerId === user.id */
+  myPlayer = computed(() => {
+    const me = this.user();
+    const plist = this.players();
+    if (!me || !plist?.length) return null;
+    const meId = String(me.id);
+    return plist.find(p => p?.playerId != null && String(p.playerId) === meId) ?? null;
+  });
+
+  /**
+   * Unirse SOLO cuando:
+   *  - hay conexión al hub
+   *  - NO me he unido
+   *  - tengo roomCode
+   *  - y YA tengo user (para usar su username real)
+   */
   private joinWhenReady = effect(() => {
     const connected = this.hubConnected();
     const alreadyJoined = this.joined();
     const code = this.roomCode();
-    const username = this.user()?.username ?? 'Player';
+    const me = this.user();
 
-    if (connected && !alreadyJoined && code) {
-      this.store.dispatch(roomActions.joinRoom({ code, username }));
+    if (!connected || alreadyJoined || !code || !me) return; // 👈 evita unirte como "Player"
+    const username = me.username;
+
+    this.store.dispatch(roomActions.joinRoom({ code, username }));
+  });
+
+  /** Mostrar modal de game over cuando mi jugador se queda sin vidas */
+  private watchElimination = effect(() => {
+    const mine = this.myPlayer();
+    if (!mine) return;
+    const lives = Number(mine.lives ?? 0);
+    if (lives <= 0 && !this.gameOver()) {
+      this.gameOver.set(true);
+      this.stats.set({ score: Number(mine.score ?? 0) });
     }
   });
 

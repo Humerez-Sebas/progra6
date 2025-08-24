@@ -26,3 +26,9 @@ export interface VerifyResponse {
   userId?: string;
   username?: string;
 }
+
+export interface AuthResponse {
+  success: boolean;
+  message?: string;
+  user: UserDto;
+}

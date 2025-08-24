@@ -1,30 +1,30 @@
-<div class="min-h-screen grid place-items-center grid-bg px-3">
-  <div class="w-full max-w-6xl pixel-card p-4 relative">
+<div class="grid min-h-screen px-3 place-items-center grid-bg">
+  <div class="relative w-full max-w-6xl p-4 pixel-card">
     <div class="flex items-center justify-between mb-4">
       <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
-      <div class="space-x-2 flex items-center">
-        <button (click)="startGame()" class="text-xs px-2 py-1 bg-emerald-700 text-white rounded">Start Game</button>
-        <a routerLink="/lobby" class="text-emerald-200 underline text-xs">Volver al lobby</a>
+      <div class="flex items-center space-x-2">
+        <button (click)="startGame()" class="px-2 py-1 text-xs text-white rounded bg-emerald-700">Start Game</button>
+        <a routerLink="/lobby" class="text-xs underline text-emerald-200">Volver al lobby</a>
       </div>
     </div>
 
     @if (error(); as err) {
-      <div class="mb-3 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+      <div class="px-4 py-2 mb-3 text-xs text-red-200 border border-red-400 rounded-md bg-red-900/40">
         {{ err }}
         <a routerLink="/lobby" class="ml-2 underline">Volver</a>
       </div>
     }
 
     @if (joined()) {
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div class="lg:col-span-2">
           <app-room-canvas />
         </div>
         <div>
-          <div class="mb-4 bg-emerald-800/30 p-2 rounded text-emerald-100">
-            <h2 class="text-xs font-bold mb-2">Jugadores</h2>
+          <div class="p-2 mb-4 rounded bg-emerald-800/30 text-emerald-100">
+            <h2 class="mb-2 text-xs font-bold">Jugadores</h2>
             @for (p of players(); track p.playerId) {
-              <div class="text-xs flex justify-between">
+              <div class="flex justify-between text-xs">
                 <span>{{ p.username }}</span>
                 <span>❤️ {{ p.lives ?? 3 }} · ⭐ {{ p.score ?? 0 }}</span>
               </div>
@@ -34,9 +34,19 @@
         </div>
       </div>
     } @else {
-      <div class="text-emerald-200 text-sm">Conectando a la sala...</div>
+      <div class="text-sm text-emerald-200">Conectando a la sala...</div>
     }
 
     <div class="scanline"></div>
+
+    @if (gameOver()) {
+      <div class="absolute inset-0 flex items-center justify-center bg-black/80">
+        <div class="p-4 text-center rounded bg-emerald-800 text-emerald-100">
+          <h2 class="mb-2 text-lg font-bold">Juego Terminado</h2>
+          <p>Puntaje: {{ stats()?.score ?? 0 }}</p>
+          <a routerLink="/lobby" class="inline-block px-3 py-1 mt-3 text-white rounded bg-emerald-600">Volver al lobby</a>
+        </div>
+      </div>
+    }
   </div>
 </div>
