@@ -113,6 +113,44 @@ public class RoomsController : ControllerBase
         return CreatedAtAction(nameof(GetRoom), new { roomId = room.RoomId }, room);
     }
 
+    [HttpPost("join")]
+    [Authorize]
+    public async Task<ActionResult<RoomStateDto>> JoinRoom([FromBody] JoinRoomDto joinRoomDto)
+    {
+        var userId = GetUserIdFromClaims();
+        if (userId is null)
+            return Unauthorized(new { success = false, message = "Invalid user token" });
+
+        var room = await _gameService.JoinRoom(userId, string.Empty, joinRoomDto);
+        if (room == null)
+            return BadRequest(new { success = false, message = "Could not join room" });
+
+        return Ok(room);
+    }
+
+    [HttpPost("{roomId}/start")]
+    [Authorize]
+    public async Task<ActionResult<RoomStateDto>> StartGame(string roomId)
+    {
+        var room = await _gameService.StartGame(roomId);
+        if (room == null)
+            return BadRequest(new { success = false, message = "Could not start game" });
+
+        var snap = await _roomRegistry.GetByIdAsync(roomId);
+        if (snap != null)
+        {
+            await _roomRegistry.UpsertRoomAsync(
+                room.RoomId,
+                room.RoomCode,
+                snap.Name,
+                snap.MaxPlayers,
+                snap.IsPublic,
+                room.Status);
+        }
+
+        return Ok(room);
+    }
+
     private string? GetUserIdFromClaims()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

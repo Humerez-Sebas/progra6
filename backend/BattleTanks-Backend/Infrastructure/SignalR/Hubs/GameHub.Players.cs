@@ -12,13 +12,15 @@ public partial class GameHub : Hub
     private readonly IRoomRegistry _rooms;
     private readonly IMapService _map;
     private readonly IBulletService _bulletService;
+    private readonly IPowerUpService _powerUps;
 
-    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMapService map, IBulletService bullets)
+    public GameHub(IConnectionTracker tracker, IRoomRegistry rooms, IMapService map, IBulletService bullets, IPowerUpService powerUps)
     {
         _tracker = tracker;
         _rooms = rooms;
         _map = map;
         _bulletService = bullets;
+        _powerUps = powerUps;
     }
     
     public async Task JoinRoom(string roomCode, string? username = null)
@@ -55,6 +57,15 @@ public partial class GameHub : Hub
 
         var mapSnap = await _map.GetSnapshotAsync(roomSnap.RoomId);
         await Clients.Caller.SendAsync("mapSnapshot", mapSnap);
+
+        var powerUps = _powerUps.GetActive(roomCode);
+        if (powerUps.Count == 0)
+        {
+            var spawned = _powerUps.SpawnRandom(roomCode, roomSnap.RoomId);
+            powerUps = new[] { spawned };
+            await Clients.Group(roomCode).SendAsync("powerUpSpawned", spawned);
+        }
+        await Clients.Caller.SendAsync("powerUpsSnapshot", powerUps);
     }
 
 
@@ -91,6 +102,18 @@ public partial class GameHub : Hub
             position.Timestamp > 0 ? position.Timestamp : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         );
 
+        await _rooms.UpdatePlayerPositionAsync(info.RoomCode, info.UserId, position.X, position.Y, position.Rotation);
+
         await Clients.Group(info.RoomCode).SendAsync("playerMoved", fixedDto);
+
+        if (_powerUps.TryConsume(info.RoomCode, info.UserId, position.X, position.Y, out var pu))
+        {
+            var newState = await _rooms.AddHealthAsync(info.RoomCode, info.UserId, 20);
+            await Clients.Group(info.RoomCode).SendAsync("powerUpCollected", new { powerUpId = pu!.Id, userId = info.UserId });
+            if (newState != null)
+            {
+                await Clients.Group(info.RoomCode).SendAsync("playerHealthUpdated", new { userId = info.UserId, health = newState.Health });
+            }
+        }
     }
 }

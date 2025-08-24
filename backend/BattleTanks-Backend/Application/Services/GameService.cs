@@ -1,6 +1,7 @@
 using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Services;
 
@@ -174,6 +175,27 @@ public class GameService : IGameService
         await _notificationService.NotifyPlayerPositionUpdate(roomId, positionDto);
 
         return true;
+    }
+
+    public async Task<RoomStateDto?> StartGame(string roomId)
+    {
+        if (!Guid.TryParse(roomId, out var roomGuid))
+            return null;
+
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
+        if (session == null)
+            return null;
+
+        session.StartGame();
+        if (session.Status != GameRoomStatus.InProgress)
+            return null;
+
+        await _gameSessionRepository.UpdateAsync(session);
+
+        var roomState = MapToRoomStateDto(session);
+        await _notificationService.NotifyRoomStateChanged(roomId, roomState);
+
+        return roomState;
     }
 
     public async Task<RoomStateDto?> GetRoomState(string roomId)

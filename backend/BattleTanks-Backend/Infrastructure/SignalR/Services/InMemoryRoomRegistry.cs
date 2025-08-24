@@ -80,6 +80,31 @@ internal sealed class InMemoryRoomRegistry : IRoomRegistry
         return Task.FromResult<IReadOnlyCollection<PlayerStateDto>>(Array.Empty<PlayerStateDto>());
     }
 
+    public Task UpdatePlayerPositionAsync(string roomCode, string userId, float x, float y, float rotation)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) &&
+            _byId.TryGetValue(roomId, out var room) &&
+            room.Players.TryGetValue(userId, out var state))
+        {
+            var newState = state with { X = x, Y = y, Rotation = rotation };
+            room.Players[userId] = newState;
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task<PlayerStateDto?> AddHealthAsync(string roomCode, string userId, int amount)
+    {
+        if (_codeToId.TryGetValue(roomCode, out var roomId) &&
+            _byId.TryGetValue(roomId, out var room) &&
+            room.Players.TryGetValue(userId, out var state))
+        {
+            var newState = state with { Health = state.Health + amount };
+            room.Players[userId] = newState;
+            return Task.FromResult<PlayerStateDto?>(newState);
+        }
+        return Task.FromResult<PlayerStateDto?>(null);
+    }
+
     private async Task<Room> EnsureRoomByCodeAsync(string roomCode)
     {
         if (_codeToId.TryGetValue(roomCode, out var id) && _byId.TryGetValue(id, out var cached))
