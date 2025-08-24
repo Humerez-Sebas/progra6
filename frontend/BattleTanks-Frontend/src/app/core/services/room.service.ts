@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { env } from '../utils/env';
-import { CreateRoomDto, RoomStateDto } from '../models/room.models';
+import { CreateRoomDto, JoinRoomDto, RoomStateDto } from '../models/room.models';
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {
@@ -19,6 +19,10 @@ export class RoomService {
 
   getRoom(roomId: string) {
     return this.http.get<RoomStateDto>(`${this.base}/Rooms/${roomId}`);
+  }
+
+  joinRoom(dto: JoinRoomDto) {
+    return this.http.post<RoomStateDto>(`${this.base}/Rooms/join`, dto);
   }
 
   startGame(roomId: string) {

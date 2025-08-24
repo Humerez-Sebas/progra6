@@ -38,5 +38,15 @@
     }
 
     <div class="scanline"></div>
+
+    @if (gameOver()) {
+      <div class="absolute inset-0 bg-black/80 flex items-center justify-center">
+        <div class="bg-emerald-800 p-4 rounded text-center text-emerald-100">
+          <h2 class="text-lg font-bold mb-2">Juego Terminado</h2>
+          <p>Puntaje: {{ stats()?.score ?? 0 }}</p>
+          <a routerLink="/lobby" class="mt-3 inline-block px-3 py-1 bg-emerald-600 text-white rounded">Volver al lobby</a>
+        </div>
+      </div>
+    }
   </div>
 </div>
