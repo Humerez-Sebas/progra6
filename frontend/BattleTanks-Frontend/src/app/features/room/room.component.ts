@@ -20,6 +20,7 @@ import {
   selectRoomError,
   selectRoomId,
   selectPlayers,
+  selectGameResult,
 } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
@@ -46,9 +47,11 @@ export class RoomComponent implements OnInit, OnDestroy {
   user         = toSignal<UserDto | null>(this.store.select(selectUser), { initialValue: null });
   roomId       = toSignal(this.store.select(selectRoomId),       { initialValue: null });
   players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] as any[] });
+  gameResult   = toSignal(this.store.select(selectGameResult),   { initialValue: null });
 
   private roomCode = signal<string | null>(null);
   gameOver = signal(false);
+  victory = signal(false);
   stats = signal<{ score: number } | null>(null);
 
   /** Identifica MI jugador por playerId === user.id */
@@ -87,6 +90,19 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (lives <= 0 && !this.gameOver()) {
       this.gameOver.set(true);
       this.stats.set({ score: Number(mine.score ?? 0) });
+    }
+  });
+
+  /** Mostrar modal de victoria cuando el juego termina y yo soy el ganador */
+  private watchVictory = effect(() => {
+    const result = this.gameResult();
+    const me = this.user();
+    if (!result || !me || this.gameOver()) return;
+    if (result.winnerPlayerId === String(me.id)) {
+      const myScore = result.scores.find(s => String(s.playerId) === String(me.id))?.score ?? 0;
+      this.stats.set({ score: myScore });
+      this.victory.set(true);
+      this.gameOver.set(true);
     }
   });
 

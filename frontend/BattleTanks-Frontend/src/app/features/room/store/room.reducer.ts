@@ -25,6 +25,7 @@ export interface RoomState {
   powerUps: EntityState<PowerUpEntity>;
   chat: ChatMessageDto[];
   lastUsername: string | null;
+  gameResult: { winnerPlayerId: string; scores: { playerId: string; score: number }[] } | null;
 
   map: {
     width: number;
@@ -49,6 +50,7 @@ const initialState: RoomState = {
   powerUps: powerUpsAdapter.getInitialState(),
   chat: [],
   lastUsername: null,
+  gameResult: null,
   map: null,
 };
 
@@ -79,6 +81,8 @@ export const roomReducer = createReducer(
   // Snapshots
   on(roomActions.roomSnapshotReceived, (s, { snapshot }) => ({
     ...s,
+    roomId: snapshot.roomId ?? s.roomId,
+    roomCode: snapshot.roomCode ?? s.roomCode,
     players: playersAdapter.setAll(
       (snapshot.players ?? []).map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
       s.players
@@ -203,16 +207,6 @@ export const roomReducer = createReducer(
     bullets: bulletsAdapter.removeOne(bulletId, s.bullets),
   })),
 
-  // Roster HTTP
-  on(roomActions.rosterLoaded, (s, { players, roomId }) => ({
-    ...s,
-    roomId: roomId ?? s.roomId,
-    players: playersAdapter.upsertMany(
-      players.map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
-      s.players
-    ),
-  })),
-
   on(roomActions.messageReceived, (s, { msg }) => ({
     ...s,
     chat: [...s.chat, msg].slice(-200),
@@ -228,7 +222,7 @@ export const roomReducer = createReducer(
       };
       players = playersAdapter.upsertOne(up, players);
     }
-    return { ...s, players };
+    return { ...s, players, gameResult: { winnerPlayerId: data.winnerPlayerId, scores: data.scores } };
   }),
 );
 

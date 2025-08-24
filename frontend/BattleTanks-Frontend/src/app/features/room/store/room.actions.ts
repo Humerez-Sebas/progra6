@@ -30,8 +30,6 @@ export const roomActions = createActionGroup({
     'Leave Room': emptyProps(),
     'Left': emptyProps(),
 
-    'Roster Loaded': props<{ players: PlayerStateDto[]; roomId: string | null }>(),
-
     // Snapshots nuevos
     'Room Snapshot Received': props<{ snapshot: RoomSnapshotDto }>(),
     'Map Snapshot Received': props<{ snapshot: MapSnapshotDto }>(),
