@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using Application.DTOs;
 using Application.Interfaces;
-using Infrastructure.SignalR.Abstractions;
 using Infrastructure.SignalR.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -14,8 +14,8 @@ public class BulletSimulationService : BackgroundService
     private readonly ILogger<BulletSimulationService> _log;
     private readonly IBulletService _bullets;
     private readonly IMapService _map;
-    private readonly IRoomRegistry _rooms;
     private readonly IHubContext<GameHub> _hub;
+    private readonly IServiceScopeFactory _scopeFactory;
 
 
     private readonly Dictionary<string, Dictionary<string, int>> _lives = new();
@@ -28,14 +28,14 @@ public class BulletSimulationService : BackgroundService
         ILogger<BulletSimulationService> log,
         IBulletService bullets,
         IMapService map,
-        IRoomRegistry rooms,
-        IHubContext<GameHub> hub)
+        IHubContext<GameHub> hub,
+        IServiceScopeFactory scopeFactory)
     {
         _log = log;
         _bullets = bullets;
         _map = map;
-        _rooms = rooms;
         _hub = hub;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,17 +46,20 @@ public class BulletSimulationService : BackgroundService
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var game = scope.ServiceProvider.GetRequiredService<IGameService>();
+
             var now = sw.ElapsedMilliseconds;
             var dt = Math.Clamp((now - last) / 1000f, 0f, 0.05f);
             last = now;
 
-            Step(dt);
+            Step(dt, game);
 
             await Task.Delay(16, stoppingToken); // ~60Hz
         }
     }
 
-    private void Step(float dt)
+    private void Step(float dt, IGameService game)
     {
         foreach (var (roomCode, bulletId, b) in _bullets.EnumerateAll().ToList())
         {
@@ -65,11 +68,11 @@ public class BulletSimulationService : BackgroundService
                 _bullets.Despawn(roomCode, bulletId);
                 continue;
             }
-            
+
             var nx = b.X + MathF.Cos(b.DirectionRadians) * b.Speed * dt;
             var ny = b.Y + MathF.Sin(b.DirectionRadians) * b.Speed * dt;
-            
-            var snap = _rooms.GetByCodeAsync(roomCode).GetAwaiter().GetResult();
+
+            var snap = game.GetRoomByCode(roomCode).GetAwaiter().GetResult();
             if (snap is null)
             {
                 _bullets.Despawn(roomCode, bulletId);
@@ -110,7 +113,8 @@ public class BulletSimulationService : BackgroundService
                 continue;
             }
             
-            var hitPlayerId = FindHitPlayer(snap.Players, nx, ny, b.ShooterId);
+            var players = snap.Players.ToDictionary(p => p.PlayerId);
+            var hitPlayerId = FindHitPlayer(players, nx, ny, b.ShooterId);
             if (hitPlayerId is not null)
             {
                 var lives = GetLivesDict(snap.RoomId);
