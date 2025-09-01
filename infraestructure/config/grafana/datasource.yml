@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: k6
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: battletanks
+      defaultBucket: k6
+    secureJsonData:
+      token: k6-token
+    isDefault: true

@@ -16,19 +16,21 @@ public class GameSession
     public DateTime? StartedAt { get; private set; }
     public DateTime? EndedAt { get; private set; }
     public bool IsPublic { get; private set; }
+    public string Region { get; private set; } = "global";
 
     public IReadOnlyList<Player> Players => _players.AsReadOnly();
     public IReadOnlyList<Score> Scores => _scores.AsReadOnly();
 
     private GameSession() { }
 
-    public static GameSession Create(string name, int maxPlayers = 4, bool isPublic = true)
+    public static GameSession Create(string name, string region, int maxPlayers = 4, bool isPublic = true)
     {
         return new GameSession
         {
             Id = Guid.NewGuid(),
             Code = GenerateRoomCode(),
             Name = name,
+            Region = region,
             MaxPlayers = maxPlayers,
             IsPublic = isPublic,
             Status = GameRoomStatus.Waiting,

@@ -90,6 +90,11 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -101,6 +106,12 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Region");
+
+                    b.HasIndex(new[] { "Region", "Status", "IsPublic" });
 
                     b.ToTable("game_sessions", (string)null);
                 });
