@@ -1,11 +1,29 @@
 # k6 Load Tests
 
-Simple k6 script to exercise the authentication endpoints.
+Scripts for exercising the backend under load. All tests can push metrics to InfluxDB by running k6 with `--out influxdb=http://localhost:8086/k6`.
 
-## Running
+## Authentication
+Simulates 100 users registering and logging in simultaneously, tracking 4xx/5xx errors.
 
 ```bash
+API_BASE_URL=http://localhost:5000 \
 k6 run --out influxdb=http://localhost:8086/k6 auth.js
 ```
 
-Set `API_BASE_URL` environment variable if backend is running elsewhere.
+## SignalR Movement
+Simulates 20 players sending position updates in real time.
+
+```bash
+SIGNALR_URL=ws://localhost:5000/game-hub ROOM_CODE=test \
+k6 run --out influxdb=http://localhost:8086/k6 signalr.js
+```
+
+## MQTT Power-up Notifications
+Subscribes 50 clients to `powerups/#` and counts received messages.
+
+```bash
+MQTT_URL=mqtt://localhost:1883 \
+k6 run --out influxdb=http://localhost:8086/k6 mqtt.js
+```
+
+Set the environment variables to point to the correct backend services if they are running elsewhere.
