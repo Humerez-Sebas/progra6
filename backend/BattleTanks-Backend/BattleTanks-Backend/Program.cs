@@ -2,11 +2,13 @@ using Infrastructure.Extensions;
 using Infrastructure.SignalR.Hubs;
 using Infrastructure.Persistence;
 using Infrastructure.Configuration;
+using Infrastructure.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,6 +75,17 @@ builder.Services
                 }
 
                 return Task.CompletedTask;
+            },
+            OnTokenValidated = async context =>
+            {
+                var redis = context.HttpContext.RequestServices.GetRequiredService<IRedisService>();
+                if (context.SecurityToken is JwtSecurityToken jwt)
+                {
+                    if (!await redis.IsTokenValidAsync(jwt.RawData))
+                    {
+                        context.Fail("invalid_session");
+                    }
+                }
             }
         };
     });

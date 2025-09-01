@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Domain.Entities;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -16,6 +17,7 @@ public class EfScoreRepository : IScoreRepository
     public async Task<Score?> GetByIdAsync(Guid id)
     {
         return await _context.Scores
+            .AsNoTracking()
             .Include(s => s.User)
             .Include(s => s.GameSession)
             .FirstOrDefaultAsync(s => s.Id == id);
@@ -24,6 +26,7 @@ public class EfScoreRepository : IScoreRepository
     public async Task<List<Score>> GetByUserIdAsync(Guid userId)
     {
         return await _context.Scores
+            .AsNoTracking()
             .Include(s => s.GameSession)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.AchievedAt)
@@ -33,6 +36,7 @@ public class EfScoreRepository : IScoreRepository
     public async Task<List<Score>> GetByGameSessionIdAsync(Guid gameSessionId)
     {
         return await _context.Scores
+            .AsNoTracking()
             .Include(s => s.User)
             .Where(s => s.GameSessionId == gameSessionId)
             .OrderByDescending(s => s.Points)
@@ -42,6 +46,7 @@ public class EfScoreRepository : IScoreRepository
     public async Task<List<Score>> GetTopScoresAsync(int limit = 10)
     {
         return await _context.Scores
+            .AsNoTracking()
             .Include(s => s.User)
             .Include(s => s.GameSession)
             .OrderByDescending(s => s.Points)
@@ -53,6 +58,7 @@ public class EfScoreRepository : IScoreRepository
     public async Task<List<Score>> GetUserTopScoresAsync(Guid userId, int limit = 10)
     {
         return await _context.Scores
+            .AsNoTracking()
             .Include(s => s.GameSession)
             .Where(s => s.UserId == userId)
             .OrderByDescending(s => s.Points)
@@ -69,8 +75,7 @@ public class EfScoreRepository : IScoreRepository
 
     public async Task AddRangeAsync(IEnumerable<Score> scores)
     {
-        await _context.Scores.AddRangeAsync(scores);
-        await _context.SaveChangesAsync();
+        await _context.BulkInsertAsync(scores.ToList());
     }
 
     public async Task UpdateAsync(Score score)
