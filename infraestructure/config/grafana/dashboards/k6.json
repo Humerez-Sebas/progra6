@@ -1,0 +1,45 @@
+{
+  "id": null,
+  "title": "k6 Load Test Metrics",
+  "time": { "from": "now-5m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "SignalR Latency",
+      "type": "timeseries",
+      "datasource": "k6",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"signalr_latency\") |> mean()"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "MQTT Throughput",
+      "type": "timeseries",
+      "datasource": "k6",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"mqtt_messages\") |> aggregateWindow(every: 1s, fn: sum) |> derivative(unit: 1s, nonNegative: true)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "HTTP Errors",
+      "type": "timeseries",
+      "datasource": "k6",
+      "targets": [
+        {
+          "refId": "A",
+          "query": "from(bucket: \"k6\") |> range(start: -5m) |> filter(fn: (r) => r._measurement == \"http_4xx\" or r._measurement == \"http_5xx\") |> aggregateWindow(every: 1s, fn: sum)"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 38,
+  "version": 1
+}

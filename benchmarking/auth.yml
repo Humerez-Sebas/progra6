@@ -1,0 +1,16 @@
+scenarios:
+  - name: register-and-login
+    flow:
+      - function: randomUser
+      - post:
+          url: "/auth/register"
+          json:
+            username: "{{ username }}"
+            email: "{{ email }}"
+            password: "Password123!"
+            confirmPassword: "Password123!"
+      - post:
+          url: "/auth/login"
+          json:
+            usernameOrEmail: "{{ username }}"
+            password: "Password123!"

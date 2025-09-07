@@ -98,12 +98,55 @@ services:
     networks:
       - battletanks-network
 
+  # InfluxDB v2 for k6 metrics
+  influxdb:
+    image: influxdb:2.7
+    container_name: battletanks-influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin123
+      DOCKER_INFLUXDB_INIT_ORG: battletanks
+      DOCKER_INFLUXDB_INIT_BUCKET: k6
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: k6-token
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - battletanks-network
+
+  # Grafana to visualize k6 metrics
+  grafana:
+    image: grafana/grafana-oss:11.1.0
+    container_name: battletanks-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./config/grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - influxdb
+    networks:
+      - battletanks-network
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
     driver: local
   pgadmin_data:
+    driver: local
+  influxdb_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

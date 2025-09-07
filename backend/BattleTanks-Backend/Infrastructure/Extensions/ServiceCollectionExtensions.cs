@@ -17,7 +17,7 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddDbContext<BattleTanksDbContext>(options =>
+        services.AddDbContextPool<BattleTanksDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(BattleTanksDbContext).Assembly.FullName)));
 
