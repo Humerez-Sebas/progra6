@@ -49,8 +49,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IMqttService, MqttService>();
         services.AddSingleton<IRedisService, RedisService>();
         services.AddSingleton<IPowerUpService, InMemoryPowerUpService>();
+        services.AddSingleton<IScoreRegistry, InMemoryScoreRegistry>();
         services.AddSingleton<BulletSimulationService>();
-        services.AddSingleton<ILifeService>(sp => sp.GetRequiredService<BulletSimulationService>());
         services.AddHostedService(sp => sp.GetRequiredService<BulletSimulationService>());
         
         return services;
