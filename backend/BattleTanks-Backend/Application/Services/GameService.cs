@@ -2,6 +2,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
+using Infrastructure.SignalR.Abstractions;
 
 namespace Application.Services;
 
@@ -12,19 +13,25 @@ public class GameService : IGameService
     private readonly IUserRepository _userRepository;
     private readonly IGameNotificationService _notificationService;
     private readonly IScoreRepository _scoreRepository;
+    private readonly IScoreRegistry _scoreRegistry;
+    private readonly IRoomRegistry _roomRegistry;
 
     public GameService(
         IGameSessionRepository gameSessionRepository,
         IPlayerRepository playerRepository,
         IUserRepository userRepository,
         IGameNotificationService notificationService,
-        IScoreRepository scoreRepository)
+        IScoreRepository scoreRepository,
+        IScoreRegistry scoreRegistry,
+        IRoomRegistry roomRegistry)
     {
         _gameSessionRepository = gameSessionRepository;
         _playerRepository = playerRepository;
         _userRepository = userRepository;
         _notificationService = notificationService;
         _scoreRepository = scoreRepository;
+        _scoreRegistry = scoreRegistry;
+        _roomRegistry = roomRegistry;
     }
 
     public async Task<RoomStateDto?> CreateRoom(string userId, CreateRoomDto createRoomDto)
@@ -123,7 +130,7 @@ public class GameService : IGameService
         var player = session.GetPlayer(userGuid);
         if (player == null) return null;
 
-        return MapToPlayerStateDto(player);
+        return MapToPlayerStateDto(player, session.Id);
     }
 
     public async Task<bool> MovePlayer(string roomId, string userId, string direction)
@@ -224,7 +231,7 @@ public class GameService : IGameService
         var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
         var player = session?.GetPlayer(userGuid);
 
-        return player != null ? MapToPlayerStateDto(player) : null;
+        return player != null ? MapToPlayerStateDto(player, roomGuid) : null;
     }
 
     public async Task<List<RoomStateDto>> GetActiveRooms(string? region = null)
@@ -262,18 +269,34 @@ public class GameService : IGameService
         await _gameSessionRepository.UpdateAsync(session);
     }
 
-    public async Task EndGame(string roomId)
+    public async Task<RoomStateDto?> EndGame(string roomId)
     {
-        if (!Guid.TryParse(roomId, out var roomGuid)) return;
+        if (!Guid.TryParse(roomId, out var roomGuid)) return null;
         var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
-        if (session is null) return;
+        if (session is null) return null;
+
+        var scores = _scoreRegistry.GetScores(roomId);
+        var lives = _scoreRegistry.GetLives(roomId);
+        foreach (var player in session.Players)
+        {
+            var pid = player.UserId.ToString();
+            if (scores.TryGetValue(pid, out var sc))
+            {
+                var diff = sc - player.SessionScore;
+                if (diff > 0) player.AddScore(diff);
+            }
+            if (lives.TryGetValue(pid, out var l) && l <= 0 && player.IsAlive)
+            {
+                player.RegisterDeath();
+            }
+        }
 
         session.EndGame();
         await _gameSessionRepository.UpdateAsync(session);
 
+        await _scoreRepository.AddRangeAsync(session.Scores);
         foreach (var score in session.Scores)
         {
-            await _scoreRepository.AddAsync(score);
             var user = await _userRepository.GetByIdAsync(score.UserId);
             if (user != null)
             {
@@ -282,8 +305,19 @@ public class GameService : IGameService
             }
         }
 
+        await _roomRegistry.UpsertRoomAsync(
+            session.Id.ToString(),
+            session.Code,
+            session.Name,
+            session.MaxPlayers,
+            session.IsPublic,
+            session.Status.ToString());
+
+        _scoreRegistry.ResetRoom(roomId);
+
         var roomState = MapToRoomStateDto(session);
         await _notificationService.NotifyRoomStateChanged(roomId, roomState);
+        return roomState;
     }
 
     private RoomStateDto MapToRoomStateDto(GameSession session)
@@ -293,19 +327,25 @@ public class GameService : IGameService
             session.Code,
             session.Region,
             session.Status.ToString(),
-            session.Players.Select(MapToPlayerStateDto).ToList()
+            session.Players.Select(p => MapToPlayerStateDto(p, session.Id)).ToList()
         );
     }
 
-    private PlayerStateDto MapToPlayerStateDto(Player player)
+    private PlayerStateDto MapToPlayerStateDto(Player player, Guid sessionId)
     {
+        var roomId = sessionId.ToString();
+        var playerId = player.UserId.ToString();
+        var lives = _scoreRegistry.GetLives(roomId, playerId);
+        var score = _scoreRegistry.GetScore(roomId, playerId);
         return new PlayerStateDto(
-            player.UserId.ToString(),
+            playerId,
             player.Username,
             player.Position.X,
             player.Position.Y,
             player.Rotation,
-            player.IsAlive
+            lives > 0 && player.IsAlive,
+            lives,
+            score
         );
     }
 }

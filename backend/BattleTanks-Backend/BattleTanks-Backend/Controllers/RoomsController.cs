@@ -14,15 +14,18 @@ public class RoomsController : ControllerBase
     private readonly IGameService _gameService;
     private readonly IGameSessionRepository _gameSessionRepository;
     private readonly IRoomRegistry _roomRegistry;
+    private readonly IScoreRegistry _scoreRegistry;
 
     public RoomsController(
         IGameService gameService,
         IGameSessionRepository gameSessionRepository,
-        IRoomRegistry roomRegistry)
+        IRoomRegistry roomRegistry,
+        IScoreRegistry scoreRegistry)
     {
         _gameService = gameService;
         _gameSessionRepository = gameSessionRepository;
         _roomRegistry = roomRegistry;
+        _scoreRegistry = scoreRegistry;
     }
 
     [HttpGet]
@@ -36,18 +39,31 @@ public class RoomsController : ControllerBase
         // Enriquecer cada room con los jugadores actuales desde RoomRegistry
         var roomsTasks = items.Select(async s =>
         {
-            var playersNow = await _roomRegistry.GetPlayersByIdAsync(s.Id.ToString());
+            var roomId = s.Id.ToString();
+            var playersNow = await _roomRegistry.GetPlayersByIdAsync(roomId);
 
             var players = playersNow.Count > 0
-                ? playersNow.ToList()
-                : s.Players.Select(p => new PlayerStateDto(
-                        p.UserId.ToString(),
-                        p.Username,
-                        p.Position.X,
-                        p.Position.Y,
-                        p.Rotation,
-                        p.IsAlive))
-                  .ToList();
+                ? playersNow.Select(p =>
+                    {
+                        var lives = _scoreRegistry.GetLives(roomId, p.PlayerId);
+                        var score = _scoreRegistry.GetScore(roomId, p.PlayerId);
+                        return p with { Lives = lives, Score = score, IsAlive = lives > 0 && p.IsAlive };
+                    }).ToList()
+                : s.Players.Select(p =>
+                    {
+                        var pid = p.UserId.ToString();
+                        var lives = _scoreRegistry.GetLives(roomId, pid);
+                        var score = _scoreRegistry.GetScore(roomId, pid);
+                        return new PlayerStateDto(
+                            pid,
+                            p.Username,
+                            p.Position.X,
+                            p.Position.Y,
+                            p.Rotation,
+                            lives > 0 && p.IsAlive,
+                            lives,
+                            score);
+                    }).ToList();
 
             return new RoomStateDto(
                 s.Id.ToString(),
@@ -80,12 +96,20 @@ public class RoomsController : ControllerBase
         var snap = await _roomRegistry.GetByIdAsync(roomId);
         if (snap != null && snap.Players.Any())
         {
+            var players = snap.Players.Values
+                .Select(p =>
+                {
+                    var lives = _scoreRegistry.GetLives(roomId, p.PlayerId);
+                    var score = _scoreRegistry.GetScore(roomId, p.PlayerId);
+                    return p with { Lives = lives, Score = score, IsAlive = lives > 0 && p.IsAlive };
+                })
+                .ToList();
             room = new RoomStateDto(
                 room.RoomId,
                 room.RoomCode,
                 room.Region,
                 room.Status,
-                snap.Players.Values.ToList()
+                players
             );
         }
 
@@ -145,6 +169,17 @@ public class RoomsController : ControllerBase
                 snap.IsPublic,
                 room.Status);
         }
+
+        return Ok(room);
+    }
+
+    [HttpPost("{roomId}/end")]
+    [Authorize]
+    public async Task<ActionResult<RoomStateDto>> EndGame(string roomId)
+    {
+        var room = await _gameService.EndGame(roomId);
+        if (room == null)
+            return BadRequest(new { success = false, message = "Could not end game" });
 
         return Ok(room);
     }

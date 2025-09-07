@@ -18,5 +18,5 @@ public interface IGameService
 
     Task AwardWallPoints(string roomId, string userId, int points);
     Task RegisterKill(string roomId, string shooterId, string targetId, int points);
-    Task EndGame(string roomId);
+    Task<RoomStateDto?> EndGame(string roomId);
 }
