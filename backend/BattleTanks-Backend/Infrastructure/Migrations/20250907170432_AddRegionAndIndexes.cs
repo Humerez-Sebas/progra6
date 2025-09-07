@@ -1,9 +1,13 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
 
 namespace Infrastructure.Migrations
 {
-    public class AddRegionAndIndexes : Migration
+    /// <inheritdoc />
+    public partial class AddRegionAndIndexes : Migration
     {
+        /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
@@ -12,12 +16,10 @@ namespace Infrastructure.Migrations
                 type: "character varying(50)",
                 maxLength: 50,
                 nullable: false,
-                defaultValue: "global");
+                defaultValue: "global"); // <-- antes era ""
 
-            migrationBuilder.CreateIndex(
-                name: "IX_game_sessions_Status",
-                table: "game_sessions",
-                column: "Status");
+            // Si ya había filas creadas antes de esta migración, asegúrate de backfill:
+            migrationBuilder.Sql(@"UPDATE game_sessions SET ""Region"" = 'global' WHERE ""Region"" = '' OR ""Region"" IS NULL;");
 
             migrationBuilder.CreateIndex(
                 name: "IX_game_sessions_Region",
@@ -28,16 +30,22 @@ namespace Infrastructure.Migrations
                 name: "IX_game_sessions_Region_Status_IsPublic",
                 table: "game_sessions",
                 columns: new[] { "Region", "Status", "IsPublic" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_game_sessions_Status",
+                table: "game_sessions",
+                column: "Status");
         }
 
+        /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_game_sessions_Region_Status_IsPublic",
+                name: "IX_game_sessions_Region",
                 table: "game_sessions");
 
             migrationBuilder.DropIndex(
-                name: "IX_game_sessions_Region",
+                name: "IX_game_sessions_Region_Status_IsPublic",
                 table: "game_sessions");
 
             migrationBuilder.DropIndex(
