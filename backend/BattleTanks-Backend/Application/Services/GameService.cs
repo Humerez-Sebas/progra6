@@ -2,6 +2,7 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
+using System.Collections.Generic;
 using Infrastructure.SignalR.Abstractions;
 
 namespace Application.Services;
@@ -272,8 +273,12 @@ public class GameService : IGameService
     public async Task<RoomStateDto?> EndGame(string roomId)
     {
         if (!Guid.TryParse(roomId, out var roomGuid)) return null;
-        var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
-        if (session is null) return null;
+
+        var session = await _gameSessionRepository.GetByIdAsync(roomGuid)
+            ?? throw new KeyNotFoundException("Game session not found");
+
+        if (session.Status == GameRoomStatus.Finished)
+            return MapToRoomStateDto(session);
 
         var scores = _scoreRegistry.GetScores(roomId);
         var lives = _scoreRegistry.GetLives(roomId);
