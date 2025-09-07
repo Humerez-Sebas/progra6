@@ -35,6 +35,8 @@ class SignalRServiceMock {
 class RoomServiceMock {
   getRooms = jasmine.createSpy('getRooms').and.returnValue(of({ items: [] }));
   getRoom  = jasmine.createSpy('getRoom').and.returnValue(of(null));
+  startGame = jasmine.createSpy('startGame').and.returnValue(of(void 0));
+  endGame   = jasmine.createSpy('endGame').and.returnValue(of(void 0));
 }
 
 describe('RoomEffects (simple)', () => {
