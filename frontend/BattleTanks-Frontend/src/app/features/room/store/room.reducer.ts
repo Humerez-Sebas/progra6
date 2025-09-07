@@ -14,9 +14,12 @@ export interface PlayerEntity extends PlayerStateDto {}
 export interface BulletEntity extends BulletStateDto {}
 export interface PowerUpEntity extends PowerUpDto {}
 
+export type RoomStatus = 'Waiting' | 'InProgress' | 'Finished';
+
 export interface RoomState {
   roomId: string | null;
   roomCode: string | null;
+  status: RoomStatus;
   joined: boolean;
   hubConnected: boolean;
   error: string | null;
@@ -42,6 +45,7 @@ const powerUpsAdapter = createEntityAdapter<PowerUpEntity>({ selectId: (p) => p.
 const initialState: RoomState = {
   roomId: null,
   roomCode: null,
+  status: 'Waiting' as RoomStatus,
   joined: false,
   hubConnected: false,
   error: null,
@@ -71,10 +75,12 @@ export const roomReducer = createReducer(
     ...s,
     joined: false,
     roomCode: null,
+    status: 'Waiting' as RoomStatus,
     players: playersAdapter.removeAll(s.players),
     bullets: bulletsAdapter.removeAll(s.bullets),
     powerUps: powerUpsAdapter.removeAll(s.powerUps),
     chat: [],
+    gameResult: null,
     map: null,
   })),
 
@@ -83,6 +89,7 @@ export const roomReducer = createReducer(
     ...s,
     roomId: snapshot.roomId ?? s.roomId,
     roomCode: snapshot.roomCode ?? s.roomCode,
+    status: s.status,
     players: playersAdapter.setAll(
       (snapshot.players ?? []).map(p => ({ ...p, lives: p.lives ?? 3, score: p.score ?? 0 })),
       s.players
@@ -219,8 +226,16 @@ export const roomReducer = createReducer(
       };
       players = playersAdapter.upsertOne(up, players);
     }
-    return { ...s, players, gameResult: { winnerPlayerId: data.winnerPlayerId, scores: data.scores } };
+    return { ...s, players, status: 'Finished' as RoomStatus, gameResult: { winnerPlayerId: data.winnerPlayerId, scores: data.scores } };
   }),
+
+  on(roomActions.startGame, (s) => ({ ...s, error: null })),
+  on(roomActions.startGameSuccess, (s) => ({ ...s, status: 'InProgress' as RoomStatus })),
+  on(roomActions.startGameFailure, (s, { error }) => ({ ...s, error })),
+
+  on(roomActions.endGame, (s) => ({ ...s, error: null })),
+  on(roomActions.endGameSuccess, (s) => ({ ...s, status: 'Finished' as RoomStatus })),
+  on(roomActions.endGameFailure, (s, { error }) => ({ ...s, error })),
 );
 
 export const roomPlayersAdapter = playersAdapter;

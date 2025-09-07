@@ -26,6 +26,10 @@ export class RoomService {
   }
 
   startGame(roomId: string) {
-    return this.http.post<RoomStateDto>(`${this.base}/Rooms/${roomId}/start`, {});
+    return this.http.post<void>(`${this.base}/Rooms/${roomId}/start`, {});
+  }
+
+  endGame(roomId: string) {
+    return this.http.post<void>(`${this.base}/Rooms/${roomId}/end`, {});
   }
 }

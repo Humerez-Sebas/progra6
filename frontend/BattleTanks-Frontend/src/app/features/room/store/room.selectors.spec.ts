@@ -20,6 +20,7 @@ describe('Room Selectors', () => {
     const room: RoomState = {
       roomId: 'r1',
       roomCode: 'ABCD',
+      status: 'Waiting' as any,
       joined: true,
       hubConnected: true,
       error: null,
@@ -28,6 +29,7 @@ describe('Room Selectors', () => {
       powerUps,
       chat: [],
       lastUsername: 'juan',
+      gameResult: null,
       map: null,
     };
     state = { room };

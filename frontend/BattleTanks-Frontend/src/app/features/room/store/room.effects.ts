@@ -116,6 +116,45 @@ export class RoomEffects {
     { dispatch: false }
   );
 
+  startGame$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(roomActions.startGame),
+      switchMap(({ roomId }) =>
+        this.roomsHttp.startGame(roomId).pipe(
+          map(() => {
+            alert('Juego iniciado');
+            return roomActions.startGameSuccess();
+          }),
+          catchError((err) =>
+            of(
+              roomActions.startGameFailure({
+                error: err?.error?.message ?? 'No se pudo iniciar el juego',
+              })
+            )
+          )
+        )
+      )
+    )
+  );
+
+  endGame$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(roomActions.endGame),
+      switchMap(({ roomId }) =>
+        this.roomsHttp.endGame(roomId).pipe(
+          map(() => roomActions.endGameSuccess()),
+          catchError((err) =>
+            of(
+              roomActions.endGameFailure({
+                error: err?.error?.message ?? 'No se pudo finalizar el juego',
+              })
+            )
+          )
+        )
+      )
+    )
+  );
+
   leave$ = createEffect(
     () =>
       this.actions$.pipe(

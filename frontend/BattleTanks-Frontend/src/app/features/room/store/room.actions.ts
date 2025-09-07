@@ -30,6 +30,13 @@ export const roomActions = createActionGroup({
     'Leave Room': emptyProps(),
     'Left': emptyProps(),
 
+    'Start Game': props<{ roomId: string }>(),
+    'Start Game Success': emptyProps(),
+    'Start Game Failure': props<{ error: string }>(),
+    'End Game': props<{ roomId: string }>(),
+    'End Game Success': emptyProps(),
+    'End Game Failure': props<{ error: string }>(),
+
     // Snapshots nuevos
     'Room Snapshot Received': props<{ snapshot: RoomSnapshotDto }>(),
     'Map Snapshot Received': props<{ snapshot: MapSnapshotDto }>(),

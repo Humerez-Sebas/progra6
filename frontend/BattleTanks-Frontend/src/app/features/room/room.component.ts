@@ -21,11 +21,13 @@ import {
   selectRoomId,
   selectPlayers,
   selectGameResult,
+  selectRoom,
+  selectAlivePlayers,
+  selectRoomStatus,
 } from './store/room.selectors';
 import { selectUser } from './../auth/store/auth.selectors';
 import { RoomCanvasComponent } from './room-canvas/room-canvas.component';
 import { ChatPanelComponent } from './chat-panel/chat-panel.component';
-import { RoomService } from '../../core/services/room.service';
 import { UserDto } from '../../core/models/auth.models';
 
 @Component({
@@ -39,15 +41,19 @@ import { UserDto } from '../../core/models/auth.models';
 export class RoomComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private store = inject(Store);
-  private roomsHttp = inject(RoomService);
+  room$ = this.store.select(selectRoom);
+  players$ = this.store.select(selectPlayers);
+  alivePlayers$ = this.store.select(selectAlivePlayers);
 
   hubConnected = toSignal(this.store.select(selectHubConnected), { initialValue: false });
   joined       = toSignal(this.store.select(selectJoined),       { initialValue: false });
   error        = toSignal(this.store.select(selectRoomError),    { initialValue: null });
   user         = toSignal<UserDto | null>(this.store.select(selectUser), { initialValue: null });
   roomId       = toSignal(this.store.select(selectRoomId),       { initialValue: null });
-  players      = toSignal(this.store.select(selectPlayers),      { initialValue: [] as any[] });
+  players      = toSignal(this.players$,                              { initialValue: [] as any[] });
   gameResult   = toSignal(this.store.select(selectGameResult),   { initialValue: null });
+  alivePlayers = toSignal(this.alivePlayers$,                    { initialValue: [] as any[] });
+  status       = toSignal(this.store.select(selectRoomStatus),  { initialValue: 'Waiting' });
 
   private roomCode = signal<string | null>(null);
   gameOver = signal(false);
@@ -106,6 +112,21 @@ export class RoomComponent implements OnInit, OnDestroy {
     }
   });
 
+  private watchAlive = effect(() => {
+    const alive = this.alivePlayers();
+    const roomId = this.roomId();
+    const me = this.user();
+    const status = this.status();
+    if (alive.length === 1 && roomId && status === 'InProgress' && !this.gameOver()) {
+      const winner = alive[0];
+      if (me && String(me.id) === String(winner.playerId)) {
+        this.victory.set(true);
+      }
+      this.gameOver.set(true);
+      this.store.dispatch(roomActions.endGame({ roomId }));
+    }
+  });
+
   ngOnInit(): void {
     const code = this.route.snapshot.paramMap.get('code');
     this.roomCode.set(code);
@@ -116,10 +137,10 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.store.dispatch(roomActions.leaveRoom());
   }
 
-  startGame() {
+  onStartGame() {
     const id = this.roomId();
     if (id) {
-      this.roomsHttp.startGame(id).subscribe();
+      this.store.dispatch(roomActions.startGame({ roomId: id }));
     }
   }
 }

@@ -1,40 +1,44 @@
 <div class="grid min-h-screen px-3 place-items-center grid-bg">
   <div class="relative w-full max-w-6xl p-4 pixel-card">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
-      <div class="flex items-center space-x-2">
-        <button (click)="startGame()" class="px-2 py-1 text-xs text-white rounded bg-emerald-700">Start Game</button>
-        <a routerLink="/lobby" class="text-xs underline text-emerald-200">Volver al lobby</a>
-      </div>
-    </div>
-
-    @if (error(); as err) {
-      <div class="px-4 py-2 mb-3 text-xs text-red-200 border border-red-400 rounded-md bg-red-900/40">
-        {{ err }}
-        <a routerLink="/lobby" class="ml-2 underline">Volver</a>
-      </div>
-    }
-
-    @if (joined()) {
-      <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div class="lg:col-span-2">
-          <app-room-canvas />
+    @if (room$ | async as room) {
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="pixel-title">BATTLE TANKS · SALA</h1>
+        <div class="flex items-center space-x-2">
+          @if (room.status === 'Waiting') {
+            <button (click)="onStartGame()" class="px-2 py-1 text-xs text-white rounded bg-emerald-700">Start Game</button>
+          }
+          <a routerLink="/lobby" class="text-xs underline text-emerald-200">Volver al lobby</a>
         </div>
-        <div>
-          <div class="p-2 mb-4 rounded bg-emerald-800/30 text-emerald-100">
-            <h2 class="mb-2 text-xs font-bold">Jugadores</h2>
-            @for (p of players(); track p.playerId) {
-              <div class="flex justify-between text-xs">
-                <span>{{ p.username }}</span>
-                <span>❤️ {{ p.lives ?? 3 }} · ⭐ {{ p.score ?? 0 }}</span>
-              </div>
-            }
+      </div>
+
+      @if (room.error; as err) {
+        <div class="px-4 py-2 mb-3 text-xs text-red-200 border border-red-400 rounded-md bg-red-900/40">
+          {{ err }}
+          <a routerLink="/lobby" class="ml-2 underline">Volver</a>
+        </div>
+      }
+
+      @if (room.joined) {
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div class="lg:col-span-2">
+            <app-room-canvas />
           </div>
-          <app-chat-panel />
+          <div>
+            <div class="p-2 mb-4 rounded bg-emerald-800/30 text-emerald-100">
+              <h2 class="mb-2 text-xs font-bold">Jugadores</h2>
+              @for (p of players$ | async; track p.playerId) {
+                <div class="flex justify-between text-xs">
+                  <span>{{ p.username }}</span>
+                  <span>❤️ {{ p.lives ?? 3 }} · ⭐ {{ p.score ?? 0 }}</span>
+                </div>
+              }
+            </div>
+            <app-chat-panel />
+          </div>
         </div>
-      </div>
-    } @else {
-      <div class="text-sm text-emerald-200">Conectando a la sala...</div>
+      } @else {
+        <div class="text-sm text-emerald-200">Conectando a la sala...</div>
+      }
     }
 
     <div class="scanline"></div>

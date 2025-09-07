@@ -9,6 +9,7 @@ describe('Room Reducer', () => {
     initial = {
       roomId: null,
       roomCode: null,
+      status: 'Waiting' as any,
       joined: false,
       hubConnected: false,
       error: null,
@@ -17,6 +18,7 @@ describe('Room Reducer', () => {
       powerUps: roomPowerUpsAdapter.getInitialState(),
       chat: [],
       lastUsername: null,
+      gameResult: null,
       map: null,
     };
   });
