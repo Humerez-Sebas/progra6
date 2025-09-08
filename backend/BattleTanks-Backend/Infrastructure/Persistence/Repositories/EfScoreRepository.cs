@@ -1,6 +1,5 @@
 using Application.Interfaces;
 using Domain.Entities;
-using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -71,11 +70,6 @@ public class EfScoreRepository : IScoreRepository
     {
         await _context.Scores.AddAsync(score);
         await _context.SaveChangesAsync();
-    }
-
-    public async Task AddRangeAsync(IEnumerable<Score> scores)
-    {
-        await _context.BulkInsertAsync(scores.ToList());
     }
 
     public async Task UpdateAsync(Score score)

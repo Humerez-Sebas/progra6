@@ -1,6 +1,5 @@
 using Application.Interfaces;
 using Domain.Entities;
-using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -84,10 +83,10 @@ public class EfPlayerRepository : IPlayerRepository
     public async Task DeleteByUserIdAsync(Guid userId)
     {
         var players = await _context.Players
-            .AsNoTracking()
             .Where(p => p.UserId == userId)
             .ToListAsync();
 
-        await _context.BulkDeleteAsync(players);
+        _context.Players.RemoveRange(players);
+        await _context.SaveChangesAsync();
     }
 }
