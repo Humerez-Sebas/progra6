@@ -1,4 +1,5 @@
 using Domain.Entities;
+using System.Collections.Generic;
 
 namespace Application.Interfaces;
 
@@ -11,6 +12,7 @@ public interface IPlayerRepository
     Task<Player?> GetActivePlayerByUserIdAsync(Guid userId);
     Task AddAsync(Player player);
     Task UpdateAsync(Player player);
+    Task UpdateRangeAsync(IEnumerable<Player> players);
     Task DeleteAsync(Guid id);
     Task DeleteByUserIdAsync(Guid userId);
 }

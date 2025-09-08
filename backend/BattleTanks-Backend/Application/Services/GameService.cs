@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 using System.Collections.Generic;
 using Infrastructure.SignalR.Abstractions;
+using System.Linq;
 
 namespace Application.Services;
 
@@ -201,6 +202,7 @@ public class GameService : IGameService
         if (session.Status != GameRoomStatus.InProgress)
             return null;
 
+        await _playerRepository.UpdateRangeAsync(session.Players);
         await _gameSessionRepository.UpdateAsync(session);
 
         var roomState = MapToRoomStateDto(session);
@@ -295,6 +297,8 @@ public class GameService : IGameService
                 player.RegisterDeath();
             }
         }
+
+        await _playerRepository.UpdateRangeAsync(session.Players);
 
         session.EndGame();
         await _gameSessionRepository.UpdateAsync(session);

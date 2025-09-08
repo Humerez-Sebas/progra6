@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace Infrastructure.Persistence.Repositories;
 
@@ -67,7 +68,25 @@ public class EfPlayerRepository : IPlayerRepository
 
     public async Task UpdateAsync(Player player)
     {
-        _context.Players.Update(player);
+        var existing = await _context.Players.FindAsync(player.Id);
+        if (existing is null)
+            throw new KeyNotFoundException("Player not found");
+
+        _context.Entry(existing).CurrentValues.SetValues(player);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateRangeAsync(IEnumerable<Player> players)
+    {
+        foreach (var player in players)
+        {
+            var existing = await _context.Players.FindAsync(player.Id);
+            if (existing is null)
+                throw new KeyNotFoundException("Player not found");
+
+            _context.Entry(existing).CurrentValues.SetValues(player);
+        }
+
         await _context.SaveChangesAsync();
     }
 
