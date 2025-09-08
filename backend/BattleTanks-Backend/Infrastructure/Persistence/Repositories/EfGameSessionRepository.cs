@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Repositories;
@@ -18,6 +19,7 @@ public class EfGameSessionRepository : IGameSessionRepository
     public async Task<GameSession?> GetByIdAsync(Guid id)
     {
         return await _context.GameSessions
+            .AsNoTracking()
             .Include(gs => gs.Players).ThenInclude(p => p.User)
             .Include(gs => gs.Scores)
             .FirstOrDefaultAsync(gs => gs.Id == id);
@@ -73,23 +75,15 @@ public class EfGameSessionRepository : IGameSessionRepository
 
     public async Task UpdateAsync(GameSession session)
     {
-        var existing = _context.GameSessions.Local.FirstOrDefault(gs => gs.Id == session.Id)
-                       ?? await _context.GameSessions.FirstOrDefaultAsync(gs => gs.Id == session.Id);
+        var affected = await _context.GameSessions
+            .Where(gs => gs.Id == session.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(gs => gs.Status, session.Status)
+                .SetProperty(gs => gs.StartedAt, session.StartedAt)
+                .SetProperty(gs => gs.EndedAt, session.EndedAt));
 
-        if (existing == null)
+        if (affected == 0)
             throw new KeyNotFoundException("Game session not found");
-
-        if (!ReferenceEquals(existing, session))
-        {
-            existing.Status = session.Status;
-            existing.StartedAt = session.StartedAt;
-            existing.EndedAt = session.EndedAt;
-        }
-
-        if (_context.Entry(existing).State == EntityState.Unchanged)
-            return;
-
-        await _context.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(Guid id)
