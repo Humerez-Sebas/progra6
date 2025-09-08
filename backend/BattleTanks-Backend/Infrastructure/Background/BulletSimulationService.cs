@@ -55,13 +55,13 @@ public class BulletSimulationService : BackgroundService
             var dt = Math.Clamp((now - last) / 1000f, 0f, 0.05f);
             last = now;
 
-            Step(dt);
+            await Step(dt);
 
             await Task.Delay(16, stoppingToken); // ~60Hz
         }
     }
 
-    private void Step(float dt)
+    private async Task Step(float dt)
     {
         foreach (var (roomCode, bulletId, b) in _bullets.EnumerateAll().ToList())
         {
@@ -70,11 +70,11 @@ public class BulletSimulationService : BackgroundService
                 _bullets.Despawn(roomCode, bulletId);
                 continue;
             }
-            
+
             var nx = b.X + MathF.Cos(b.DirectionRadians) * b.Speed * dt;
             var ny = b.Y + MathF.Sin(b.DirectionRadians) * b.Speed * dt;
-            
-            var snap = _rooms.GetByCodeAsync(roomCode).GetAwaiter().GetResult();
+
+            var snap = await _rooms.GetByCodeAsync(roomCode);
             if (snap is null)
             {
                 _bullets.Despawn(roomCode, bulletId);
@@ -112,7 +112,7 @@ public class BulletSimulationService : BackgroundService
                     var sc = _scoreRegistry.AddScore(snap.RoomId, b.ShooterId, 50);
                     _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
                         new PlayerScoredDto(b.ShooterId, sc));
-                    InvokeGameService(game => game.AwardWallPoints(snap.RoomId, b.ShooterId, 50));
+                    _ = InvokeGameService(game => game.AwardWallPoints(snap.RoomId, b.ShooterId, 50));
                 }
 
                 _bullets.Despawn(roomCode, bulletId);
@@ -131,7 +131,7 @@ public class BulletSimulationService : BackgroundService
                 var sc = _scoreRegistry.AddScore(snap.RoomId, b.ShooterId, 150);
                 _ = _hub.Clients.Group(roomCode).SendAsync("playerScored",
                     new PlayerScoredDto(b.ShooterId, sc));
-                InvokeGameService(game => game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150));
+                _ = InvokeGameService(game => game.RegisterKill(snap.RoomId, b.ShooterId, hitPlayerId, 150));
 
                 _bullets.Despawn(roomCode, bulletId);
                 _ = _hub.Clients.Group(roomCode).SendAsync("bulletDespawned", bulletId, "hit");
@@ -148,13 +148,13 @@ public class BulletSimulationService : BackgroundService
                 else
                 {
                     var remaining = _scoreRegistry.GetLives(snap.RoomId).Values.Count(v => v > 0);
-                    if (remaining <= 1)
+                    if (remaining <= 1 && snap.Status == GameRoomStatus.InProgress.ToString())
                     {
                         var scores = _scoreRegistry.GetScores(snap.RoomId);
                         var winner = scores.OrderByDescending(k => k.Value).FirstOrDefault().Key ?? hitPlayerId;
-                        InvokeGameService(async game => await game.EndGame(snap.RoomId));
+                        await InvokeGameService(game => game.EndGame(snap.RoomId));
                         var final = scores.Select(kvp => new PlayerScoreDto(kvp.Key, kvp.Value)).ToList();
-                        _ = _hub.Clients.Group(roomCode).SendAsync("gameEnded",
+                        await _hub.Clients.Group(roomCode).SendAsync("gameEnded",
                             new GameEndedDto(winner, final));
                     }
                 }
@@ -165,14 +165,11 @@ public class BulletSimulationService : BackgroundService
         }
     }
 
-    private void InvokeGameService(Func<IGameService, Task> action)
+    private async Task InvokeGameService(Func<IGameService, Task> action)
     {
-        _ = Task.Run(async () =>
-        {
-            using var scope = _scopeFactory.CreateScope();
-            var game = scope.ServiceProvider.GetRequiredService<IGameService>();
-            await action(game);
-        });
+        using var scope = _scopeFactory.CreateScope();
+        var game = scope.ServiceProvider.GetRequiredService<IGameService>();
+        await action(game);
     }
 
     private static string? FindHitPlayer(
