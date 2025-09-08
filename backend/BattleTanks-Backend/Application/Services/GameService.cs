@@ -269,6 +269,39 @@ public class GameService : IGameService
         await _gameSessionRepository.UpdateAsync(session);
     }
 
+    public async Task SavePlayerScoreAsync(Guid sessionId, Guid userId)
+    {
+        var session = await _gameSessionRepository.GetByIdAsync(sessionId);
+        if (session is null) return;
+
+        var player = session.GetPlayer(userId);
+        if (player is null) return;
+
+        var maxScore = session.Players.Max(p => p.SessionScore);
+        var isWinner = player.IsAlive && player.SessionScore == maxScore;
+
+        var duration = session.GameDuration ??
+            (session.StartedAt.HasValue ? DateTime.UtcNow - session.StartedAt.Value : TimeSpan.Zero);
+
+        var score = Score.Create(
+            userId,
+            session.Id,
+            player.SessionScore,
+            player.SessionKills,
+            player.SessionDeaths,
+            duration,
+            isWinner);
+
+        await _scoreRepository.AddAsync(score);
+
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user != null)
+        {
+            user.AddGameResult(score.IsWinner, score.Points, score.Kills);
+            await _userRepository.UpdateAsync(user);
+        }
+    }
+
     public async Task<RoomStateDto?> EndGame(string roomId)
     {
         if (!Guid.TryParse(roomId, out var roomGuid)) return null;
@@ -294,14 +327,12 @@ public class GameService : IGameService
         session.EndGame();
         await _gameSessionRepository.UpdateAsync(session);
 
-        await _scoreRepository.AddRangeAsync(session.Scores);
-        foreach (var score in session.Scores)
+        foreach (var player in session.Players)
         {
-            var user = await _userRepository.GetByIdAsync(score.UserId);
-            if (user != null)
+            var pid = player.UserId.ToString();
+            if (lives.TryGetValue(pid, out var l) && l > 0)
             {
-                user.AddGameResult(score.IsWinner, score.Points, score.Kills);
-                await _userRepository.UpdateAsync(user);
+                await SavePlayerScoreAsync(session.Id, player.UserId);
             }
         }
 
