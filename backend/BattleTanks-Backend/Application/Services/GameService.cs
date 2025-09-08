@@ -274,6 +274,8 @@ public class GameService : IGameService
         if (!Guid.TryParse(roomId, out var roomGuid)) return null;
         var session = await _gameSessionRepository.GetByIdAsync(roomGuid);
         if (session is null) return null;
+        if (session.Status != GameRoomStatus.InProgress)
+            return MapToRoomStateDto(session);
 
         var scores = _scoreRegistry.GetScores(roomId);
         var lives = _scoreRegistry.GetLives(roomId);
