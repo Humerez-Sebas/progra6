@@ -12,7 +12,7 @@ export const options = {
   },
 };
 
-const BASE_URL = __ENV.API_BASE_URL || 'http://localhost:5000';
+const BASE_URL = __ENV.API_BASE_URL || 'http://localhost:5284/api/v1';
 const clientErrors = new Counter('http_4xx');
 const serverErrors = new Counter('http_5xx');
 

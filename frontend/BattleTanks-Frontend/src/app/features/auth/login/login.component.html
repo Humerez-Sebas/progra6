@@ -1,10 +1,9 @@
-<div class="min-h-screen grid place-items-center grid-bg px-3">
-  <div class="w-full max-w-md pixel-card p-6 relative">
-    <h1 class="pixel-title text-center mb-6">BATTLE TANKS</h1>
-    <p class="text-center text-emerald-300 text-xs mb-6 tracking-wider">INGRESO PILOTO</p>
-
+<div class="grid min-h-screen px-3 place-items-center grid-bg">
+  <div class="relative w-full max-w-md p-6 pixel-card">
+    <h1 class="mb-6 text-center pixel-title">BATTLE TANKS</h1>
+    
     @if (error(); as err) {
-      <div class="mb-4 rounded-md border border-red-400 bg-red-900/40 text-red-200 px-4 py-2 text-xs">
+      <div class="px-4 py-2 mb-4 text-xs text-red-200 border border-red-400 rounded-md bg-red-900/40">
         {{ err }}
       </div>
     }
@@ -28,7 +27,7 @@
           <input
             [type]="showPassword() ? 'text' : 'password'"
             formControlName="password"
-            class="pixel-input pr-10"
+            class="pr-10 pixel-input"
             placeholder="••••••••" />
           <button
             type="button"
@@ -59,26 +58,26 @@
         }
       </div>
 
-      <button type="submit" [disabled]="loading()" class="pixel-btn w-full">
+      <button type="submit" [disabled]="loading()" class="w-full pixel-btn">
         @if (loading()) { <span class="animate-pulse">INGRESANDO...</span> } @else { INICIAR SESIÓN }
       </button>
 
-      <p class="text-center text-xs text-emerald-300">
+      <p class="text-xs text-center text-emerald-300">
         ¿No tienes cuenta?
-        <a class="text-emerald-200 underline hover:text-white" routerLink="/register">Regístrate</a>
+        <a class="underline text-emerald-200 hover:text-white" routerLink="/register">Regístrate</a>
       </p>
     </form>
 
     <!-- Modal éxito -->
     @if (showSuccessModal()) {
-      <div class="fixed inset-0 bg-black/50 grid place-items-center z-50">
+      <div class="fixed inset-0 z-50 grid bg-black/50 place-items-center">
         <div class="pixel-card p-6 w-[90%] max-w-sm text-center">
-          <h2 class="pixel-title text-green-300">¡LOGIN OK!</h2>
-          <p class="text-emerald-200 text-xs mt-2">Tu sesión está activa.</p>
+          <h2 class="text-green-300 pixel-title">¡LOGIN OK!</h2>
+          <p class="mt-2 text-xs text-emerald-200">Tu sesión está activa.</p>
           <button
             type="button"
             (click)="showSuccessModal.set(false)"
-            class="pixel-btn mt-4 w-full">CERRAR</button>
+            class="w-full mt-4 pixel-btn">CERRAR</button>
         </div>
       </div>
     }

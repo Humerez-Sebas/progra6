@@ -11,10 +11,10 @@ public class GameSession
     public string Code { get; private set; }
     public string Name { get; private set; }
     public int MaxPlayers { get; private set; }
-    public GameRoomStatus Status { get; private set; }
+    public GameRoomStatus Status { get; set; }
     public DateTime CreatedAt { get; private set; }
-    public DateTime? StartedAt { get; private set; }
-    public DateTime? EndedAt { get; private set; }
+    public DateTime? StartedAt { get; set; }
+    public DateTime? EndedAt { get; set; }
     public bool IsPublic { get; private set; }
     public string Region { get; private set; } = "global";
 

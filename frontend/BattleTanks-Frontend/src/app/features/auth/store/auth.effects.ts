@@ -74,14 +74,12 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(authActions.loginSuccess),
       tap(() => {
-        // persistimos ya en persistOnSuccess$; acá solo navegamos
         this.router.navigateByUrl('/lobby');
       })
     ),
   { dispatch: false }
 );
 
-  // Persistir cuando cargamos perfil o hagamos login en el futuro
   persistOnSuccess$ = createEffect(
     () =>
       this.actions$.pipe(

@@ -151,4 +151,5 @@ volumes:
 
 networks:
   battletanks-network:
+    name: battletanks-network  
     driver: bridge

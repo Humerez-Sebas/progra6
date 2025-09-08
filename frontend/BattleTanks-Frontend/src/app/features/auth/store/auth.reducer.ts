@@ -1,10 +1,9 @@
-// app/features/auth/store/auth.reducer.ts
 import { createReducer, on } from '@ngrx/store';
 import { authActions } from './auth.actions';
 import { UserDto } from '../../../core/models/auth.models';
 
 export interface AuthState {
-  user: UserDto | null; // ✅ usuario plano
+  user: UserDto | null;
   loading: boolean;
   error: string | null;
 }
