@@ -3,6 +3,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.SignalR.Abstractions;
+using System.Linq;
 
 namespace Application.Services;
 
@@ -327,10 +328,12 @@ public class GameService : IGameService
         session.EndGame();
         await _gameSessionRepository.UpdateAsync(session);
 
+        var existingScores = await _scoreRepository.GetByGameSessionIdAsync(session.Id);
+        var alreadySaved = existingScores.Select(s => s.UserId).ToHashSet();
+
         foreach (var player in session.Players)
         {
-            var pid = player.UserId.ToString();
-            if (lives.TryGetValue(pid, out var l) && l > 0)
+            if (!alreadySaved.Contains(player.UserId))
             {
                 await SavePlayerScoreAsync(session.Id, player.UserId);
             }
